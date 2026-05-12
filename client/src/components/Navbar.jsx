@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isScrolling, setIsScrolling] = useState(false);
@@ -41,9 +42,14 @@ const Navbar = () => {
         </a>
 
         <div className="flex items-center gap-3 md:gap-5 luxury-nav-links">
-          <a href="#about">About</a>
+          <a href="#about">Creators</a>
           <span aria-hidden>·</span>
-          <a href="#access">Access</a>
+          <a href="#pricing">Pricing</a>
+          <span aria-hidden>·</span>
+          <Link to="/auth">Sign In</Link>
+          <Link to="/auth" className="ml-3 px-4 py-2 rounded-full border border-[#00d4ff]/55 hover:bg-[#00d4ff]/18">
+            Clone Yourself →
+          </Link>
         </div>
       </div>
     </nav>
