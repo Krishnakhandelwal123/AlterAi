@@ -4,14 +4,19 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+
+// Initialize env vars before importing routes
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
+import trainingRoutes from './routes/training.js';
+import cloneRoutes from './routes/clone.js';
+import chatRoutes from './routes/chat.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, NotFoundError } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
-
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 const app = express();
 
@@ -27,6 +32,9 @@ app.use(logger);
 app.use('/api', rateLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/training', trainingRoutes);
+app.use('/api/clone', cloneRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.use((req, res, next) => {
   if (req.path === '/health') {

@@ -7,64 +7,118 @@ export const AuthContext = createContext(null);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Initialize user from localStorage if available to avoid loading screen on mount
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('alter_user_profile');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // If we have a cached user, we can start with loading: false
+  const [loading, setLoading] = useState(!user);
   const navigate = useNavigate();
 
+  // Use refs to avoid stale closures in the auth listener
+  const userRef = React.useRef(user);
+  const sessionRef = React.useRef(session);
+
+  useEffect(() => {
+    userRef.current = user;
+    sessionRef.current = session;
+  }, [user, session]);
+
   const fetchProfile = async (accessToken) => {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (!res.ok) throw new Error('Failed to fetch user');
-    return res.json();
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch user');
+      const data = await res.json();
+      localStorage.setItem('alter_user_profile', JSON.stringify(data));
+      return data;
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      throw error;
+    }
   };
 
   useEffect(() => {
     let mounted = true;
 
     const bootstrap = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session?.access_token) {
-        try {
-          const profile = await fetchProfile(data.session.access_token);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        
+        const currentSession = data.session;
+        setSession(currentSession);
+        
+        if (currentSession?.access_token) {
+          // Fetch fresh profile in background
+          const profile = await fetchProfile(currentSession.access_token);
           if (mounted) setUser(profile);
-        } catch (_error) {
-          if (mounted) setUser(null);
+        } else {
+          if (mounted) {
+            setUser(null);
+            localStorage.removeItem('alter_user_profile');
+          }
         }
+      } catch (error) {
+        console.error('Bootstrap error:', error);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      if (mounted) setLoading(false);
     };
 
     bootstrap();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+      if (!mounted) return;
+
+      const prevSession = sessionRef.current;
+      const currentUser = userRef.current;
+      
+      const sessionChanged = nextSession?.access_token !== prevSession?.access_token;
       setSession(nextSession);
+
       if (event === 'SIGNED_OUT') {
         setUser(null);
+        localStorage.removeItem('alter_user_profile');
         setLoading(false);
         return;
       }
-      if (event === 'SIGNED_IN' && nextSession?.access_token) {
-        setLoading(true);
-        try {
-          const profile = await fetchProfile(nextSession.access_token);
-          setUser(profile);
-        } catch (_error) {
-          setUser(null);
-        } finally {
-          setLoading(false);
+
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && nextSession?.access_token) {
+        // ONLY set loading to true if we have NO user data at all
+        // This prevents the "Checking session..." flicker during background refreshes or navigation
+        if (sessionChanged || !currentUser) {
+          const needsLoading = !currentUser;
+          if (needsLoading) setLoading(true);
+          
+          try {
+            const profile = await fetchProfile(nextSession.access_token);
+            if (mounted) setUser(profile);
+          } catch (_error) {
+            if (mounted && !currentUser) setUser(null);
+          } finally {
+            if (mounted) setLoading(false);
+          }
         }
+      } else if (event === 'INITIAL_SESSION' && !nextSession) {
+        setLoading(false);
       }
     });
 
     return () => {
       mounted = false;
-      subscription.subscription.unsubscribe();
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
-  }, []);
+  }, []); // Only run once on mount
 
   const signInWithProvider = async (provider) => {
     return supabase.auth.signInWithOAuth({
@@ -74,6 +128,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    localStorage.removeItem('alter_user_profile');
     if (session?.access_token) {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',

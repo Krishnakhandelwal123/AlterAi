@@ -1,7 +1,10 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { FileText, Sparkles, Share2, MessageCircle, Mic2, LineChart, Link as LinkIcon } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useClones } from '../../hooks/useClones.js';
+import CreateCloneModal from '../../components/clones/CreateCloneModal.jsx';
 import robotGif from '../../assets/robot.gif';
 
 const StepCard = ({ step, title, desc, icon: Icon }) => (
@@ -40,7 +43,31 @@ const FeatureCard = ({ icon: Icon, title, desc }) => (
 
 const DashboardHome = () => {
   const { user } = useAuth();
+  const { createClone } = useClones();
+  const navigate = useNavigate();
   const firstName = (user?.name || user?.email?.split('@')[0] || 'friend').split(' ')[0];
+  const [showModal, setShowModal] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, color = '#059669') => {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleCreate = async (formData) => {
+    try {
+      const result = await createClone(formData);
+      if (result?.success) {
+        setShowModal(false);
+        showToast(`Clone "${result.clone?.name || formData.name}" created! 🎉`);
+        setTimeout(() => navigate('/dashboard/clones'), 1200);
+      }
+      return result;
+    } catch (err) {
+      console.error('Clone creation error:', err);
+      return { success: false, error: err?.message || 'Something went wrong. Please try again.' };
+    }
+  };
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-12 md:space-y-16">
@@ -64,14 +91,15 @@ const DashboardHome = () => {
             <p className="mt-5 text-[10px] tracking-wide text-white/30" style={{ fontFamily: "'DM Mono', monospace" }}>
               10 min setup · 24/7 online · Free forever
             </p>
-            <Link
-              to="/dashboard/create"
-              className="dashboard-cta-pulse mt-7 inline-flex h-[52px] items-center justify-center gap-2 rounded-xl border border-[rgba(0,212,255,0.5)] bg-[rgba(0,212,255,0.12)] px-8 text-[13px] tracking-[0.04em] text-[rgba(0,212,255,0.88)] transition hover:bg-[rgba(0,212,255,0.18)] hover:shadow-[0_0_40px_rgba(0,212,255,0.12)]"
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="dashboard-cta-pulse mt-7 inline-flex h-[52px] items-center justify-center gap-2 rounded-xl border border-[rgba(0,212,255,0.5)] bg-[rgba(0,212,255,0.12)] px-8 text-[13px] tracking-[0.04em] text-[rgba(0,212,255,0.88)] transition hover:bg-[rgba(0,212,255,0.18)] hover:shadow-[0_0_40px_rgba(0,212,255,0.12)] cursor-pointer"
               style={{ fontFamily: "'DM Mono', monospace" }}
             >
               <Sparkles className="h-4 w-4" strokeWidth={1.5} />
               Create Your Clone
-            </Link>
+            </button>
           </div>
 
           {/* Optional classes on wrapper: dashboard-hero-robot-wrap--flat = no blend; --multiply = white matte on dark UI */}
@@ -190,13 +218,14 @@ const DashboardHome = () => {
           </p>
         </div>
         <div className="mt-8 flex flex-col items-start gap-2 md:mt-0 md:items-end">
-          <Link
-            to="/dashboard/create"
-            className="inline-flex h-[52px] items-center justify-center rounded-xl border border-[rgba(0,212,255,0.45)] bg-[rgba(0,212,255,0.14)] px-8 text-[13px] tracking-wide text-[rgba(0,212,255,0.9)] transition hover:bg-[rgba(0,212,255,0.22)]"
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="inline-flex h-[52px] items-center justify-center rounded-xl border border-[rgba(0,212,255,0.45)] bg-[rgba(0,212,255,0.14)] px-8 text-[13px] tracking-wide text-[rgba(0,212,255,0.9)] transition hover:bg-[rgba(0,212,255,0.22)] cursor-pointer"
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             ✦ Create Your Clone →
-          </Link>
+          </button>
           <p className="text-[9px] text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
             Free forever · No card needed
           </p>
@@ -227,6 +256,47 @@ const DashboardHome = () => {
           ))}
         </div>
       </section>
+
+      {/* Create Clone Modal */}
+      {showModal && (
+        <CreateCloneModal
+          onClose={() => setShowModal(false)}
+          onCreate={handleCreate}
+        />
+      )}
+
+      {/* Toast notification */}
+      {toast && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 32,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 99999,
+            background: '#111111',
+            border: `1px solid ${toast.color}33`,
+            borderRadius: 10,
+            padding: '10px 20px',
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 11,
+            color: toast.color,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            animation: 'dash-toast-up 300ms ease',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {toast.msg}
+        </div>,
+        document.body
+      )}
+
+      <style>{`
+        @keyframes dash-toast-up {
+          from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pill, StatTrio, SyncDisconnectRow } from './PlatformCard';
+import React, { useMemo, useState } from 'react';
+import { Pill } from './PlatformCard';
 
 const IconX = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="currentColor" aria-hidden>
@@ -53,220 +53,150 @@ const IconNotion = () => (
   </svg>
 );
 
-const SocialMedia = () => (
-  <div className="space-y-8">
+const CARD_META = [
+  { id: 'twitter', label: 'Twitter / X', badge: 'Creator' },
+  { id: 'reddit', label: 'Reddit', badge: 'Free' },
+  { id: 'github', label: 'GitHub', badge: 'Pro' },
+  { id: 'linkedin', label: 'LinkedIn', badge: 'Pro' },
+  { id: 'notion', label: 'Notion', badge: 'Pro' },
+  { id: 'instagram', label: 'Instagram', badge: 'Creator' },
+  { id: 'medium', label: 'Medium', badge: 'Free' }
+];
+
+const iconMap = {
+  twitter: IconX,
+  reddit: IconReddit,
+  github: IconGithub,
+  linkedin: IconLinkedin,
+  notion: IconNotion,
+  instagram: IconInstagram,
+  medium: IconMedium
+};
+
+const SocialMedia = ({ connections = [], onConnect, onDisconnect, onSync, busy = false }) => {
+  const [formState, setFormState] = useState({});
+  const connectedByPlatform = useMemo(
+    () =>
+      connections.reduce((acc, row) => {
+        acc[row.platform] = row;
+        return acc;
+      }, {}),
+    [connections]
+  );
+
+  return (
+    <div className="space-y-8">
     <div className="flex flex-col gap-4 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.05] px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-[10px] text-white/50" style={{ fontFamily: "'DM Mono', monospace" }}>
-        2 platforms connected
+        {connections.length} platform{connections.length === 1 ? '' : 's'} connected
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-2.5 py-1 text-[9px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-          <IconX /> @krishna_dev
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF4500] px-2.5 py-1 text-[9px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-          <IconReddit /> u/krishna
-        </span>
+        {connections.map((conn) => {
+          const Icon = iconMap[conn.platform] || IconX;
+          return (
+            <span key={conn.platform} className="inline-flex items-center gap-1.5 rounded-full bg-black px-2.5 py-1 text-[9px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
+              <Icon /> {conn.handle || conn.platform}
+            </span>
+          );
+        })}
       </div>
       <p className="text-[9px] text-[rgba(0,212,255,0.88)] sm:ml-auto" style={{ fontFamily: "'DM Mono', monospace" }}>
-        4,891 pieces of content imported
+        {connections.reduce((sum, c) => sum + (c.post_count || 0), 0).toLocaleString()} pieces imported
       </p>
     </div>
 
     <div className="grid gap-4 md:grid-cols-2">
-      {/* Twitter connected */}
-      <div className="rounded-2xl border border-white/15 bg-black/40 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconX />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Twitter / X
-            </span>
-          </div>
-          <Pill className="bg-[rgba(0,212,255,0.12)] text-[rgba(0,212,255,0.88)]">Most popular</Pill>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-600" />
-          <span className="text-[10px] text-emerald-600" style={{ fontFamily: "'DM Mono', monospace" }}>
-            @krishna_dev · Connected
-          </span>
-        </div>
-        <StatTrio
-          items={[
-            { value: '3,200', label: 'Tweets imported' },
-            { value: '0', label: 'Retweets' },
-            { value: '2h ago', label: 'Last sync' }
-          ]}
-        />
-        <SyncDisconnectRow />
-        <div className="mt-4">
-          <Pill className="bg-[#7C3AED]/20 text-[#C084FC]">Creator</Pill>
-        </div>
-      </div>
+      {CARD_META.map((platform) => {
+        const Icon = iconMap[platform.id] || IconX;
+        const connection = connectedByPlatform[platform.id];
+        const isConnected = Boolean(connection);
+        return (
+          <div key={platform.id} className={`rounded-2xl p-6 ${isConnected ? 'border border-white/15 bg-black/40' : 'border border-white/[0.07] bg-[#0D0D0D]'}`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <Icon />
+                <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  {platform.label}
+                </span>
+              </div>
+              <Pill className={platform.badge === 'Pro' ? 'bg-[rgba(0,212,255,0.1)] text-[rgba(0,212,255,0.88)]' : platform.badge === 'Creator' ? 'bg-[#7C3AED]/20 text-[#C084FC]' : 'bg-emerald-500/15 text-emerald-500'}>
+                {platform.badge}
+              </Pill>
+            </div>
 
-      {/* GitHub disconnected */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0D0D0D] p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconGithub />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              GitHub
-            </span>
+            {isConnected ? (
+              <>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                  <span className="text-[10px] text-emerald-600" style={{ fontFamily: "'DM Mono', monospace" }}>
+                    {connection.handle || platform.id} · Connected
+                  </span>
+                </div>
+                <p className="mt-3 text-[9px] text-white/45" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  Imported: {(connection.post_count || 0).toLocaleString()} · Last sync:{' '}
+                  {connection.last_synced ? new Date(connection.last_synced).toLocaleString() : 'Never'}
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onSync(platform.id)}
+                    className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-[rgba(0,212,255,0.2)] bg-transparent px-4 text-[10px] text-[rgba(0,212,255,0.85)] disabled:opacity-40"
+                    style={{ fontFamily: "'DM Mono', monospace" }}
+                  >
+                    ↻ Sync Now
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onDisconnect(platform.id)}
+                    className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-red-500/25 bg-transparent px-4 text-[10px] text-red-400/90 disabled:opacity-40"
+                    style={{ fontFamily: "'DM Mono', monospace" }}
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-2 text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                  Connect {platform.label} to import your content and strengthen your clone voice.
+                </p>
+                <input
+                  value={formState[platform.id]?.handle || ''}
+                  onChange={(e) =>
+                    setFormState((prev) => ({ ...prev, [platform.id]: { ...prev[platform.id], handle: e.target.value } }))
+                  }
+                  className="mt-3 h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 text-[11px] text-white"
+                  style={{ fontFamily: "'DM Mono', monospace" }}
+                  placeholder={`${platform.id} handle`}
+                />
+                <input
+                  value={formState[platform.id]?.accessToken || ''}
+                  onChange={(e) =>
+                    setFormState((prev) => ({ ...prev, [platform.id]: { ...prev[platform.id], accessToken: e.target.value } }))
+                  }
+                  className="mt-2 h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 text-[11px] text-white"
+                  style={{ fontFamily: "'DM Mono', monospace" }}
+                  placeholder="Access token"
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onConnect(platform.id, formState[platform.id]?.handle || '', formState[platform.id]?.accessToken || '')}
+                  className="mt-4 flex h-10 w-full cursor-pointer items-center justify-center rounded-[10px] border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.07)] text-[11px] text-[rgba(0,212,255,0.88)] disabled:opacity-40"
+                  style={{ fontFamily: "'DM Mono', monospace" }}
+                >
+                  Connect {platform.label} →
+                </button>
+              </>
+            )}
           </div>
-          <Pill className="bg-[rgba(0,212,255,0.1)] text-[rgba(0,212,255,0.88)]">Pro</Pill>
-        </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          Import README files, repo descriptions, and your GitHub discussions.
-        </p>
-        <ul className="mt-3 space-y-1 text-[9px] text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
-          <li>· README files from all repos</li>
-          <li>· Repository descriptions</li>
-          <li>· Discussions & comments</li>
-        </ul>
-        <span
-          className="mt-4 flex h-10 w-full cursor-default items-center justify-center rounded-[10px] border border-[rgba(110,64,201,0.25)] bg-[rgba(110,64,201,0.1)] text-[11px] text-[#a78bfa]"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          Connect GitHub →
-        </span>
-      </div>
-
-      {/* Instagram */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0D0D0D] p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconInstagram />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Instagram
-            </span>
-          </div>
-          <Pill className="bg-[#7C3AED]/20 text-[#C084FC]">Creator</Pill>
-        </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          Import captions from your public posts, reels, and stories.
-        </p>
-        <div className="mt-2.5 rounded-lg border border-amber-500/15 bg-amber-500/[0.05] px-3 py-2.5">
-          <p className="text-[9px] text-amber-500" style={{ fontFamily: "'DM Mono', monospace" }}>
-            ⚠ Public accounts only
-          </p>
-        </div>
-        <span
-          className="mt-4 flex h-10 w-full cursor-default items-center justify-center rounded-[10px] border border-pink-500/20 bg-pink-500/[0.08] text-[11px] text-pink-400"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          Connect Instagram →
-        </span>
-      </div>
-
-      {/* LinkedIn */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0D0D0D] p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconLinkedin />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              LinkedIn
-            </span>
-          </div>
-          <Pill className="bg-[rgba(0,212,255,0.1)] text-[rgba(0,212,255,0.88)]">Pro</Pill>
-        </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          Import your posts, articles, and professional profile content.
-        </p>
-        <ul className="mt-3 space-y-1 text-[9px] text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
-          <li>· All posts and articles</li>
-          <li>· Profile summary</li>
-          <li>· Comment history</li>
-        </ul>
-        <span
-          className="mt-4 flex h-10 w-full cursor-default items-center justify-center rounded-[10px] border border-[rgba(0,119,181,0.2)] bg-[rgba(0,119,181,0.08)] text-[11px] text-blue-400"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          Connect LinkedIn →
-        </span>
-      </div>
-
-      {/* Reddit connected */}
-      <div className="rounded-2xl border border-[#FF4500]/20 bg-[#FF4500]/[0.04] p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconReddit />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Reddit
-            </span>
-          </div>
-          <Pill className="bg-emerald-500/15 text-emerald-500">Free</Pill>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-600" />
-          <span className="text-[10px] text-emerald-600" style={{ fontFamily: "'DM Mono', monospace" }}>
-            u/krishna_dev · Connected
-          </span>
-        </div>
-        <StatTrio
-          items={[
-            { value: '234', label: 'Posts' },
-            { value: '1,891', label: 'Comments' },
-            { value: '1h ago', label: 'Last sync' }
-          ]}
-        />
-        <SyncDisconnectRow />
-      </div>
-
-      {/* Medium */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0D0D0D] p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconMedium />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Medium
-            </span>
-          </div>
-          <Pill className="bg-emerald-500/15 text-emerald-500">Free</Pill>
-        </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          Auto-import all your Medium articles via RSS. No login required.
-        </p>
-        <label className="mt-3 block text-[8px] uppercase tracking-wide text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
-          Your medium url
-        </label>
-        <div className="mt-1.5 h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 text-[11px] leading-10 text-white/30" style={{ fontFamily: "'DM Mono', monospace" }}>
-          medium.com/@yourusername
-        </div>
-        <span
-          className="mt-4 flex h-10 w-full cursor-default items-center justify-center rounded-[10px] border border-white/12 bg-white/[0.05] text-[11px] text-white/70"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          Import Medium →
-        </span>
-      </div>
-
-      {/* Notion */}
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0D0D0D] p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <IconNotion />
-            <span className="text-[12px] text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Notion
-            </span>
-          </div>
-          <Pill className="bg-[rgba(0,212,255,0.1)] text-[rgba(0,212,255,0.88)]">Pro</Pill>
-        </div>
-        <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          Connect your workspace. Import only the pages you choose — fully private and selective.
-        </p>
-        <div className="mt-2.5 max-w-xl rounded-lg border border-emerald-500/12 bg-emerald-500/[0.05] px-3 py-2.5">
-          <p className="text-[9px] text-emerald-600" style={{ fontFamily: "'DM Mono', monospace" }}>
-            🔒 Only pages you select are imported
-          </p>
-        </div>
-        <span
-          className="mt-4 inline-flex h-10 cursor-default items-center justify-center rounded-[10px] border border-white/12 bg-white/[0.05] px-8 text-[11px] text-white/70"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          Connect Notion →
-        </span>
-      </div>
+        );
+      })}
     </div>
   </div>
-);
+  );
+};
 
 export default SocialMedia;
