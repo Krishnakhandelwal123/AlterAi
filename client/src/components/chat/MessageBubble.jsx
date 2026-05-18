@@ -165,7 +165,7 @@ const MessageBubble = ({ message, personality, onRetry, typewriter }) => {
                   lineHeight: 1.5
                 }}
               >
-                Couldn't get a response. Try again.
+                {message.content || "Couldn't get a response. Try again."}
               </span>
             </div>
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { supabase } from '../lib/supabase.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { embedChunks } from '../utils/ai.js';
@@ -27,11 +27,34 @@ const chatRateLimiter = rateLimit({
   max: 40,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const visitorKey = typeof req.body?.visitorId === 'string' && req.body.visitorId.trim()
+      ? req.body.visitorId.trim()
+      : ipKeyGenerator(req.ip);
+    return `${req.params.slug}:${visitorKey}`;
+  },
   message: { error: 'Too many requests. Please slow down.' }
 });
 
 const sanitize = (str, max = 1000) =>
   typeof str === 'string' ? str.slice(0, max).replace(/<script|<\/script/gi, '') : '';
+
+const getChatErrorMessage = (error) => {
+  const message = error?.message || '';
+  if (
+    error?.status === 429
+    || message.includes('RESOURCE_EXHAUSTED')
+    || message.includes('generate_content_free_tier_requests')
+    || message.includes('Too Many Requests')
+    || message.includes('quota')
+  ) {
+    return "I couldn't get a response right now. Please try again in a bit.";
+  }
+  if (message.includes('GOOGLE_GEMINI_API_KEY')) {
+    return "I couldn't get a response right now. Please try again in a bit.";
+  }
+  return 'Something went wrong. Please try again.';
+};
 
 // ── GET PROFILE (PUBLIC / PREVIEW) ───────────────────────────────────────────────
 router.get('/:slug/profile', async (req, res) => {
@@ -106,19 +129,22 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
     return res.status(404).json({ error: 'Clone not found' });
   }
 
+  let requestingUser = null;
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (token) {
+    try {
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (!authError && user) {
+        requestingUser = user;
+      }
+    } catch (e) {}
+  }
+
+  const isOwner = requestingUser?.id === personality.user_id;
+
   // If clone is not public, only allow the owner to message/test it
   if (!personality.is_public) {
-    let requestingUser = null;
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (token) {
-      try {
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-        if (!authError && user) {
-          requestingUser = user;
-        }
-      } catch (e) {}
-    }
     if (!requestingUser || requestingUser.id !== personality.user_id) {
       return res.status(404).json({ error: 'Clone not found or not live' });
     }
@@ -132,7 +158,7 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
     .eq('visitor_id', visitorId)
     .maybeSingle();
 
-  if (usageRow) {
+  if (!isOwner && usageRow) {
     const windowAge = Date.now() - new Date(usageRow.window_start).getTime();
     const isNewWindow = windowAge > 24 * 60 * 60 * 1000;
     if (!isNewWindow && usageRow.message_count >= DAILY_LIMIT) {
@@ -262,7 +288,9 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
     }
 
     // Update visitor usage
-    if (usageRow) {
+    if (isOwner) {
+      // Owners can preview/test their own clone without consuming the public visitor quota.
+    } else if (usageRow) {
       const windowAge = Date.now() - new Date(usageRow.window_start).getTime();
       const isNewWindow = windowAge > 24 * 60 * 60 * 1000;
       await supabase
@@ -285,16 +313,16 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
     // Increment clone message counter (non-blocking)
     void supabase.rpc('increment_message_count', { personality_id_input: personality.id });
 
-    const newCount = usageRow ? usageRow.message_count + 1 : 1;
+    const newCount = isOwner ? 0 : (usageRow ? usageRow.message_count + 1 : 1);
     sendEvent({
       type: 'done',
       conversationId: savedConvId,
-      remaining: Math.max(0, DAILY_LIMIT - newCount)
+      remaining: isOwner ? DAILY_LIMIT : Math.max(0, DAILY_LIMIT - newCount)
     });
     res.end();
   } catch (err) {
     console.error('[chat] message error:', err);
-    sendEvent({ type: 'error', message: 'Something went wrong. Please try again.' });
+    sendEvent({ type: 'error', message: getChatErrorMessage(err) });
     res.end();
   }
 });
