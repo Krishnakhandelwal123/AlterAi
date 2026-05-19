@@ -15,6 +15,7 @@ import trainingRoutes from './routes/training.js';
 import cloneRoutes from './routes/clone.js';
 import chatRoutes from './routes/chat.js';
 import analyticsRoutes from './routes/analytics.js';
+import shareRoutes from './routes/share.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, NotFoundError } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
@@ -37,6 +38,7 @@ app.use('/api/training', trainingRoutes);
 app.use('/api/clone', cloneRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/share', shareRoutes);
 
 app.use((req, res, next) => {
   if (req.path === '/health') {

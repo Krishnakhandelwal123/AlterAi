@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { useClones } from '../../hooks/useClones.js';
 import CreateCloneModal from '../../components/clones/CreateCloneModal.jsx';
 import CloneGrid from '../../components/clones/CloneGrid.jsx';
-import ShareModal from '../../components/clones/ShareModal.jsx';
 
 const FILTERS = [
   { key: 'all', label: 'ALL' },
@@ -15,11 +15,11 @@ const FILTERS = [
 
 const MyClones = () => {
   const { clones, loading, error, filter, setFilter, counts, refetch, createClone, deleteClone, publishClone } = useClones();
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState(null);
-  const [shareClone, setShareClone] = useState(null);
 
   const showToast = (msg, color = '#059669') => {
     setToast({ msg, color });
@@ -116,7 +116,7 @@ const MyClones = () => {
           onDelete={(id) => setDeleteTarget(id)}
           onPublish={handlePublish}
           onEdit={() => {}}
-          onShare={(clone) => setShareClone(clone)}
+          onShare={(clone) => navigate(`/dashboard/share/${clone.id}`)}
           onRetry={refetch}
         />
       )}
@@ -131,19 +131,6 @@ const MyClones = () => {
               setShowModal(false);
               showToast(`Clone "${result.clone.name}" created! 🎉`);
             }
-            return result;
-          }}
-        />
-      )}
-
-      {/* Share Modal */}
-      {shareClone && (
-        <ShareModal
-          clone={shareClone}
-          onClose={() => setShareClone(null)}
-          onPublish={async (id, publish) => {
-            const result = await handlePublish(id, publish);
-            if (result?.success) setShareClone(result.clone);
             return result;
           }}
         />

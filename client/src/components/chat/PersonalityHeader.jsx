@@ -13,6 +13,7 @@ const PersonalityHeader = ({ personality }) => {
     name = '',
     bio = '',
     avatar_color: avatarColor = '#00D4FF',
+    owner_avatar: ownerAvatar = '',
     total_messages: totalMessages = 0
   } = personality;
 
@@ -55,7 +56,11 @@ const PersonalityHeader = ({ personality }) => {
             transition: 'all 300ms ease'
           }}
         >
-          {getInitials(name)}
+          {ownerAvatar ? (
+            <img src={ownerAvatar} alt="" className="header-avatar-img" />
+          ) : (
+            getInitials(name)
+          )}
         </div>
         {/* Online Indicator */}
         <div
@@ -154,6 +159,14 @@ const PersonalityHeader = ({ personality }) => {
         .header-avatar {
           width: 44px;
           height: 44px;
+          overflow: hidden;
+        }
+        .header-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
+          display: block;
         }
 
         /* Mobile Improvements */

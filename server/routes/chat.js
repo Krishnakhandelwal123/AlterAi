@@ -93,7 +93,19 @@ router.get('/:slug/profile', async (req, res) => {
       }
     }
 
-    return res.json({ success: true, personality });
+    const { data: owner } = await supabaseAdmin
+      .from('users')
+      .select('avatar')
+      .eq('id', personality.user_id)
+      .maybeSingle();
+
+    return res.json({
+      success: true,
+      personality: {
+        ...personality,
+        owner_avatar: owner?.avatar || ''
+      }
+    });
   } catch (err) {
     console.error('[chat] profile error:', err);
     return res.status(500).json({ error: 'Server error' });

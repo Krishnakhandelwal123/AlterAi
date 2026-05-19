@@ -9,11 +9,7 @@ import {
   LayoutGrid,
   CreditCard,
   Settings,
-  HelpCircle,
-  Activity,
-  Puzzle,
-  Cpu,
-  Shield
+  HelpCircle
 } from 'lucide-react';
 
 export const dashboardNavSections = [
@@ -38,16 +34,6 @@ export const dashboardNavSections = [
     ]
   },
   {
-    id: 'workspace',
-    label: 'WORKSPACE',
-    items: [
-      { to: '/dashboard/activity', label: 'Activity', icon: Activity, end: false },
-      { to: '/dashboard/integrations', label: 'Integrations', icon: Puzzle, end: false },
-      { to: '/dashboard/models', label: 'Models', icon: Cpu, end: false },
-      { to: '/dashboard/security', label: 'API & security', icon: Shield, end: false }
-    ]
-  },
-  {
     id: 'account',
     label: 'ACCOUNT',
     items: [
@@ -68,10 +54,6 @@ export const topBarMeta = (pathname) => {
     { match: /^\/dashboard\/training/, title: 'Training Data', crumb: 'Sources & uploads' },
     { match: /^\/dashboard\/share/, title: 'Share & Embed', crumb: 'Links & social' },
     { match: /^\/dashboard\/embed/, title: 'Embed Widget', crumb: 'Website integration' },
-    { match: /^\/dashboard\/activity/, title: 'Activity', crumb: 'Workspace' },
-    { match: /^\/dashboard\/integrations/, title: 'Integrations', crumb: 'Workspace' },
-    { match: /^\/dashboard\/models/, title: 'Models', crumb: 'Workspace' },
-    { match: /^\/dashboard\/security/, title: 'API & security', crumb: 'Workspace' },
     { match: /^\/dashboard\/billing/, title: 'Billing & Plans', crumb: 'Usage & upgrades' },
     { match: /^\/dashboard\/settings/, title: 'Settings', crumb: 'Profile & preferences' },
     { match: /^\/dashboard\/help/, title: 'Help & Docs', crumb: 'Guides & support' }

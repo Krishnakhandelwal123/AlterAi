@@ -8,6 +8,7 @@ const getInitials = (name = '') => {
 
 const TypingIndicator = ({ personality }) => {
   const avatarColor = personality?.avatar_color || '#00D4FF';
+  const ownerAvatar = personality?.owner_avatar || '';
   const name = personality?.name || 'AI';
 
   return (
@@ -37,7 +38,11 @@ const TypingIndicator = ({ personality }) => {
           marginTop: 2
         }}
       >
-        {getInitials(name)}
+        {ownerAvatar ? (
+          <img src={ownerAvatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+        ) : (
+          getInitials(name)
+        )}
       </div>
 
       {/* Bubble with dots */}

@@ -3,11 +3,19 @@ import { Link, NavLink } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { dashboardNavSections } from './navConfig';
 import ProfileMenu from './ProfileMenu';
+import { useClones } from '../../hooks/useClones.js';
 
 const linkBase =
   'group flex items-center gap-3 px-5 py-2.5 font-dashboard-nav text-[11px] tracking-wide text-white/40 transition-colors border-l-2 border-transparent';
 
-const DashboardSidebar = () => (
+const FREE_MESSAGE_LIMIT = 100;
+
+const DashboardSidebar = () => {
+  const { totals } = useClones();
+  const usedMessages = totals.messages || 0;
+  const usagePercent = Math.min(100, Math.round((usedMessages / FREE_MESSAGE_LIMIT) * 100));
+
+  return (
   <aside className="dashboard-sidebar fixed left-0 top-0 z-20 hidden h-screen w-[240px] flex-col border-r border-white/[0.05] bg-[#0A0A0A] md:flex">
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 px-5 pb-2 pt-6">
@@ -104,11 +112,14 @@ const DashboardSidebar = () => (
               Free plan
             </span>
             <span className="text-[8px] text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
-              0/100 msgs
+              {usedMessages.toLocaleString()}/{FREE_MESSAGE_LIMIT} msgs
             </span>
           </div>
           <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-            <div className="h-full w-[2%] rounded-full bg-[rgba(0,212,255,0.88)]" />
+            <div
+              className="h-full rounded-full bg-[rgba(0,212,255,0.88)] transition-all duration-500"
+              style={{ width: `${usagePercent}%` }}
+            />
           </div>
           <button
             type="button"
@@ -130,6 +141,7 @@ const DashboardSidebar = () => (
       </div>
     </div>
   </aside>
-);
+  );
+};
 
 export default DashboardSidebar;

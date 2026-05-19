@@ -81,6 +81,7 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
     tone,
     topics = [],
     avatar_color: avatarColor = '#00D4FF',
+    owner_avatar: ownerAvatar = '',
     status = 'draft',
     total_messages: totalMessages = 0,
     total_visitors: totalVisitors = 0,
@@ -196,7 +197,15 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
                 flexShrink: 0
               }}
             >
-              {getInitials(name)}
+              {ownerAvatar ? (
+                <img
+                  src={ownerAvatar}
+                  alt=""
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                />
+              ) : (
+                getInitials(name)
+              )}
             </div>
             <div style={{ minWidth: 0 }}>
               <div

@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middleware/authenticate.js';
 import { getUserPlan } from '../utils/planChecker.js';
 import { supabase } from '../lib/supabase.js';
+import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 
 const router = Router();
 
@@ -34,6 +35,12 @@ const AVATAR_COLORS = [
 
 const generateAvatarColor = (name) =>
   AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+
+const getMessageCount = (conversation) => {
+  if (typeof conversation.message_count === 'number') return conversation.message_count;
+  if (!Array.isArray(conversation.messages)) return 0;
+  return conversation.messages.filter((message) => message?.role === 'user').length;
+};
 
 // ── ROUTE 1: CHECK SLUG AVAILABILITY ──────────────────────────────────────────
 router.get('/check-slug/:slug', slugLimiter, authenticate, async (req, res) => {
@@ -221,9 +228,15 @@ router.post('/create', authenticate, async (req, res) => {
       });
     }
 
+    const { data: owner } = await supabaseAdmin
+      .from('users')
+      .select('avatar')
+      .eq('id', userId)
+      .maybeSingle();
+
     return res.status(201).json({
       success: true,
-      clone,
+      clone: { ...clone, owner_avatar: owner?.avatar || '' },
       message: `Clone "${name.trim()}" created successfully!`
     });
   } catch (error) {
@@ -266,7 +279,51 @@ router.get('/list', authenticate, async (req, res) => {
       throw error;
     }
 
+    const ownerIds = Array.from(new Set((data || []).map((clone) => clone.user_id).filter(Boolean)));
+    const ownerAvatars = new Map();
+    if (ownerIds.length > 0) {
+      const { data: owners, error: ownersError } = await supabaseAdmin
+        .from('users')
+        .select('id, avatar')
+        .in('id', ownerIds);
+
+      if (ownersError) {
+        logDev('list clone owner avatar error:', ownersError);
+      } else {
+        (owners || []).forEach((owner) => ownerAvatars.set(owner.id, owner.avatar || ''));
+      }
+    }
+
+    const cloneIds = (data || []).map((clone) => clone.id);
+    let conversationStats = new Map();
+
+    if (cloneIds.length > 0) {
+      const { data: conversations, error: conversationError } = await supabase
+        .from('conversations')
+        .select('personality_id, visitor_id, message_count, messages')
+        .in('personality_id', cloneIds);
+
+      if (conversationError) {
+        logDev('list clone conversation stats error:', conversationError);
+      } else {
+        conversationStats = (conversations || []).reduce((acc, conversation) => {
+          const current = acc.get(conversation.personality_id) || {
+            totalMessages: 0,
+            totalConversations: 0,
+            visitorIds: new Set()
+          };
+
+          current.totalConversations += 1;
+          current.totalMessages += getMessageCount(conversation);
+          if (conversation.visitor_id) current.visitorIds.add(conversation.visitor_id);
+          acc.set(conversation.personality_id, current);
+          return acc;
+        }, new Map());
+      }
+    }
+
     const clones = (data || []).map((clone) => {
+      const stats = conversationStats.get(clone.id);
       const totalChunks = clone.training_data
         ?.reduce((sum, td) => sum + (td.chunk_count || 0), 0) || 0;
       const trainedSources = clone.training_data
@@ -274,6 +331,10 @@ router.get('/list', authenticate, async (req, res) => {
 
       return {
         ...clone,
+        owner_avatar: ownerAvatars.get(clone.user_id) || '',
+        total_conversations: stats?.totalConversations || 0,
+        total_messages: stats?.totalMessages || 0,
+        total_visitors: stats?.visitorIds.size || 0,
         trainingStats: {
           totalChunks,
           trainedSources,
@@ -307,7 +368,17 @@ router.get('/:cloneId', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Clone not found' });
     }
 
-    return res.json({ success: true, clone: data });
+    let ownerAvatar = '';
+    if (data.user_id) {
+      const { data: owner } = await supabaseAdmin
+        .from('users')
+        .select('avatar')
+        .eq('id', data.user_id)
+        .maybeSingle();
+      ownerAvatar = owner?.avatar || '';
+    }
+
+    return res.json({ success: true, clone: { ...data, owner_avatar: ownerAvatar } });
   } catch (error) {
     logDev('get clone error:', error);
     return res.status(500).json({ error: 'Failed to fetch clone' });
@@ -341,7 +412,13 @@ router.patch('/:cloneId', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Clone not found or access denied' });
     }
 
-    return res.json({ success: true, clone: data });
+    const { data: owner } = await supabaseAdmin
+      .from('users')
+      .select('avatar')
+      .eq('id', data.user_id)
+      .maybeSingle();
+
+    return res.json({ success: true, clone: { ...data, owner_avatar: owner?.avatar || '' } });
   } catch (error) {
     logDev('update clone error:', error);
     return res.status(500).json({ error: 'Failed to update clone' });
@@ -414,9 +491,15 @@ router.patch('/:cloneId/publish', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Clone not found' });
     }
 
+    const { data: owner } = await supabaseAdmin
+      .from('users')
+      .select('avatar')
+      .eq('id', data.user_id)
+      .maybeSingle();
+
     return res.json({
       success: true,
-      clone: data,
+      clone: { ...data, owner_avatar: owner?.avatar || '' },
       message: publish ? 'Clone is now live!' : 'Clone set to draft.'
     });
   } catch (error) {

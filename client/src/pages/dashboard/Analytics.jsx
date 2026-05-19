@@ -56,9 +56,9 @@ const Analytics = () => {
 
     let cancelled = false;
 
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = async ({ silent = false } = {}) => {
       try {
-        setLoading(true);
+        if (!silent) setLoading(true);
         setError('');
         const res = await fetch(`${API_URL}/api/analytics/${selectedCloneId}`, {
           headers: await getHeaders()
@@ -79,9 +79,14 @@ const Analytics = () => {
     };
 
     fetchAnalytics();
+    const refresh = () => fetchAnalytics({ silent: true });
+    const intervalId = window.setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
 
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
     };
   }, [selectedCloneId]);
 

@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { userApi } from '../api/userApi.js';
 
 export const AuthContext = createContext(null);
 
@@ -140,11 +141,43 @@ export const AuthProvider = ({ children }) => {
     navigate('/');
   };
 
+  const applyProfile = (profile) => {
+    localStorage.setItem('alter_user_profile', JSON.stringify(profile));
+    setUser(profile);
+    return profile;
+  };
+
+  const updateProfile = async (payload) => {
+    const result = await userApi.updateProfile(payload);
+    if (result.success) applyProfile(result.profile);
+    return result;
+  };
+
+  const uploadAvatar = async (file) => {
+    const result = await userApi.uploadAvatar(file);
+    if (result.success) applyProfile(result.profile);
+    return result;
+  };
+
+  const refreshProfile = async () => {
+    const {
+      data: { session: currentSession }
+    } = await supabase.auth.getSession();
+    if (!currentSession?.access_token) return null;
+
+    const profile = await fetchProfile(currentSession.access_token);
+    applyProfile(profile);
+    return profile;
+  };
+
   const value = useMemo(
     () => ({
       user,
       session,
       loading,
+      updateProfile,
+      uploadAvatar,
+      refreshProfile,
       signInWithGoogle: () => signInWithProvider('google'),
       signInWithGithub: () => signInWithProvider('github'),
       signInWithTwitter: () => signInWithProvider('twitter'),

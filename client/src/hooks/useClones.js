@@ -7,9 +7,9 @@ export const useClones = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
 
-  const fetchClones = useCallback(async () => {
+  const fetchClones = useCallback(async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
       // Always fetch ALL clones so counts are accurate
       const data = await cloneApi.list('all');
@@ -27,6 +27,17 @@ export const useClones = () => {
 
   useEffect(() => {
     fetchClones();
+  }, [fetchClones]);
+
+  useEffect(() => {
+    const refresh = () => fetchClones({ silent: true });
+    const intervalId = window.setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refresh);
+    };
   }, [fetchClones]);
 
   // Filter clones client-side based on active filter
@@ -74,13 +85,26 @@ export const useClones = () => {
     { all: 0, live: 0, draft: 0, training: 0 }
   );
 
+  const totals = allClones.reduce(
+    (acc, clone) => {
+      acc.messages += clone.total_messages || 0;
+      acc.visitors += clone.total_visitors || 0;
+      acc.sources += clone.trainingStats?.totalSources || 0;
+      acc.conversations += clone.total_conversations || 0;
+      return acc;
+    },
+    { messages: 0, visitors: 0, sources: 0, conversations: 0 }
+  );
+
   return {
+    allClones,
     clones,
     loading,
     error,
     filter,
     setFilter,
     counts,
+    totals,
     refetch: fetchClones,
     createClone,
     deleteClone,

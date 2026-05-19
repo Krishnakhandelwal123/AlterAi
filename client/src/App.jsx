@@ -13,7 +13,7 @@ import CreateClone from './pages/dashboard/CreateClone';
 import Analytics from './pages/dashboard/Analytics';
 import VoiceClone from './pages/dashboard/VoiceClone';
 import TrainingData from './pages/dashboard/TrainingData';
-import ShareEmbed from './pages/dashboard/ShareEmbed';
+import SharePage from './pages/SharePage';
 import EmbedWidget from './pages/dashboard/EmbedWidget';
 import Billing from './pages/dashboard/Billing';
 import Settings from './pages/dashboard/Settings';
@@ -46,7 +46,8 @@ const App = () => (
             <Route path="analytics" element={<Analytics />} />
             <Route path="voice" element={<VoiceClone />} />
             <Route path="training" element={<TrainingData />} />
-            <Route path="share" element={<ShareEmbed />} />
+            <Route path="share" element={<SharePage />} />
+            <Route path="share/:cloneId" element={<SharePage />} />
             <Route path="embed" element={<EmbedWidget />} />
             <Route path="billing" element={<Billing />} />
             <Route path="settings" element={<Settings />} />

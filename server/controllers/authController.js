@@ -7,6 +7,15 @@ const mapProfile = (profile, user) => ({
   email: profile?.email || user.email,
   name: profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || '',
   avatar: profile?.avatar || user.user_metadata?.avatar_url || '',
+  bio: profile?.bio || '',
+  website: profile?.website || '',
+  location: profile?.location || '',
+  notifications: profile?.notifications || {
+    newConversation: true,
+    dailySummary: true,
+    weeklyAnalytics: false,
+    productUpdates: true
+  },
   createdAt: profile?.created_at || user.created_at
 });
 

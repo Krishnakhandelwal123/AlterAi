@@ -43,7 +43,7 @@ const FeatureCard = ({ icon: Icon, title, desc }) => (
 
 const DashboardHome = () => {
   const { user } = useAuth();
-  const { createClone } = useClones();
+  const { createClone, counts, totals } = useClones();
   const navigate = useNavigate();
   const firstName = (user?.name || user?.email?.split('@')[0] || 'friend').split(' ')[0];
   const [showModal, setShowModal] = useState(false);
@@ -155,10 +155,10 @@ const DashboardHome = () => {
       >
         <div className="mx-auto grid max-w-[900px] grid-cols-2 gap-8 md:grid-cols-4 md:gap-0">
           {[
-            { n: '2,400+', l: 'Creators cloned' },
-            { n: '1.2M', l: 'Conversations' },
-            { n: '10 min', l: 'Avg setup time' },
-            { n: '$0', l: 'To start free' }
+            { n: counts.all.toLocaleString(), l: 'Total clones' },
+            { n: totals.conversations.toLocaleString(), l: 'Conversations' },
+            { n: totals.messages.toLocaleString(), l: 'Messages' },
+            { n: totals.sources.toLocaleString(), l: 'Training sources' }
           ].map((s, i) => (
             <div key={s.l} className={`text-center ${i > 0 ? 'md:border-l md:border-white/[0.06]' : ''}`}>
               <p className="text-[32px] italic font-light leading-none text-white" style={{ fontFamily: "'Playfair Display', serif" }}>

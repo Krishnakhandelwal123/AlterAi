@@ -113,6 +113,7 @@ const ChatPage = () => {
 
   const isHardLimit = rateLimitInfo != null || remainingMessages === 0;
   const avatarColor = personality?.avatar_color || '#8B5CF6';
+  const ownerAvatar = personality?.owner_avatar || '';
   const topics = Array.isArray(personality?.topics) ? personality.topics.slice(0, 4) : [];
   const visibleMessages = messages.filter((m) => !m.isWelcome || !hasStarted);
 
@@ -136,7 +137,7 @@ const ChatPage = () => {
       <main className="chat-stage">
         <aside className="persona-rail">
           <div className="persona-mark" style={{ background: avatarColor, boxShadow: `0 0 34px ${avatarColor}66` }}>
-            {getInitials(personality?.name)}
+            {ownerAvatar ? <img src={ownerAvatar} alt="" /> : getInitials(personality?.name)}
           </div>
           <p className="persona-kicker">Live personality</p>
           <h1>{personality?.name || 'AI Clone'}</h1>
@@ -334,12 +335,19 @@ const ChatPage = () => {
           width: 88px;
           height: 88px;
           border-radius: 28px;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
           color: #fff;
           font: italic 34px 'Playfair Display', serif;
           border: 1px solid rgba(255,255,255,0.18);
+        }
+        .persona-mark img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
         .persona-kicker,
         .intro-label {

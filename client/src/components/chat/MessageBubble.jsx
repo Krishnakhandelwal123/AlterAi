@@ -39,6 +39,7 @@ const MessageBubble = ({ message, personality, onRetry, typewriter }) => {
   const isStreaming = message.isStreaming;
 
   const avatarColor = personality?.avatar_color || '#00D4FF';
+  const ownerAvatar = personality?.owner_avatar || '';
   const name = personality?.name || 'AI';
 
   if (isUser) {
@@ -139,7 +140,11 @@ const MessageBubble = ({ message, personality, onRetry, typewriter }) => {
               marginTop: 2
             }}
           >
-            {getInitials(name)}
+            {ownerAvatar ? (
+              <img src={ownerAvatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              getInitials(name)
+            )}
           </div>
 
           <div
@@ -263,7 +268,11 @@ const MessageBubble = ({ message, personality, onRetry, typewriter }) => {
             boxShadow: `0 0 18px ${avatarColor}55`
           }}
         >
-          {getInitials(name)}
+          {ownerAvatar ? (
+            <img src={ownerAvatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            getInitials(name)
+          )}
         </div>
 
         {/* Bubble */}
