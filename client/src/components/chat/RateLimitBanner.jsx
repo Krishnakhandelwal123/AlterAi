@@ -7,6 +7,11 @@ const RateLimitBanner = ({ remainingMessages, rateLimitInfo }) => {
 
   const resetAt = rateLimitInfo?.resetAt;
   const limit = rateLimitInfo?.limit || 20;
+  const period = rateLimitInfo?.period === 'month' ? 'month' : 'day';
+  const title = period === 'month' ? 'This creator has reached the monthly limit' : "You've reached today's limit";
+  const body = period === 'month'
+    ? `This clone owner has used ${limit.toLocaleString()} creator messages this month. Please try again when their plan resets.`
+    : `This clone allows ${limit} messages per day. Come back tomorrow to continue chatting.`;
   const isHardLimit = rateLimitInfo != null || remainingMessages === 0;
   const isWarning = !isHardLimit && remainingMessages != null && remainingMessages <= 3 && remainingMessages > 0;
 
@@ -46,7 +51,7 @@ const RateLimitBanner = ({ remainingMessages, rateLimitInfo }) => {
           fontSize: 18,
           color: '#fff'
         }}>
-          You've reached today's limit
+          {title}
         </div>
         <div style={{
           fontFamily: 'Inter, system-ui, sans-serif',
@@ -57,7 +62,7 @@ const RateLimitBanner = ({ remainingMessages, rateLimitInfo }) => {
           margin: '8px auto 0',
           lineHeight: 1.5
         }}>
-          This clone allows {limit} messages per day. Come back tomorrow to continue chatting.
+          {body}
         </div>
         {resetAt && (
           <div style={{

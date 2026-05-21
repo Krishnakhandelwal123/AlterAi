@@ -4,16 +4,20 @@ import { Search } from 'lucide-react';
 import { dashboardNavSections } from './navConfig';
 import ProfileMenu from './ProfileMenu';
 import { useClones } from '../../hooks/useClones.js';
+import { useBillingSubscription } from '../../hooks/useBillingSubscription.js';
 
 const linkBase =
   'group flex items-center gap-3 px-5 py-2.5 font-dashboard-nav text-[11px] tracking-wide text-white/40 transition-colors border-l-2 border-transparent';
 
-const FREE_MESSAGE_LIMIT = 100;
-
 const DashboardSidebar = () => {
   const { totals } = useClones();
-  const usedMessages = totals.messages || 0;
-  const usagePercent = Math.min(100, Math.round((usedMessages / FREE_MESSAGE_LIMIT) * 100));
+  const { currentPlan, limits } = useBillingSubscription();
+  const usedMessages = totals.currentMonthMessages || 0;
+  const messageLimit = limits?.maxCreatorMessagesPerMonth || 200;
+  const usagePercent = Math.min(100, Math.round((usedMessages / messageLimit) * 100));
+  const planLabel = `${currentPlan.charAt(0).toUpperCase()}${currentPlan.slice(1)} plan`;
+  const upgradeTarget = currentPlan === 'creator' ? '/dashboard/billing' : '/dashboard/billing#plans';
+  const upgradeLabel = currentPlan === 'free' ? 'Upgrade to Pro ->' : currentPlan === 'pro' ? 'Upgrade to Creator ->' : 'Manage plan ->';
 
   return (
   <aside className="dashboard-sidebar fixed left-0 top-0 z-20 hidden h-screen w-[240px] flex-col border-r border-white/[0.05] bg-[#0A0A0A] md:flex">
@@ -27,7 +31,7 @@ const DashboardSidebar = () => {
             ALTER
           </span>
           <span className="text-[6px] translate-y-[-2px] leading-none text-[rgba(0,212,255,0.88)]" aria-hidden>
-            ●
+            .
           </span>
         </Link>
         <label className="mt-5 block">
@@ -109,10 +113,10 @@ const DashboardSidebar = () => {
         <div className="rounded-[10px] border border-[rgba(0,212,255,0.15)] bg-[rgba(0,212,255,0.05)] p-3">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[8px] uppercase tracking-[0.12em] text-[rgba(0,212,255,0.88)]" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Free plan
+              {planLabel}
             </span>
             <span className="text-[8px] text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
-              {usedMessages.toLocaleString()}/{FREE_MESSAGE_LIMIT} msgs
+              {usedMessages.toLocaleString()}/{messageLimit.toLocaleString()} monthly
             </span>
           </div>
           <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
@@ -121,21 +125,21 @@ const DashboardSidebar = () => {
               style={{ width: `${usagePercent}%` }}
             />
           </div>
-          <button
-            type="button"
-            className="mt-2 w-full text-right text-[9px] text-[#C084FC] hover:text-[#C084FC]/90"
+          <Link
+            to={upgradeTarget}
+            className="mt-2 block w-full text-right text-[9px] text-[#C084FC] hover:text-[#C084FC]/90"
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
-            Upgrade →
-          </button>
+            {currentPlan === 'creator' ? 'Manage ->' : 'Upgrade ->'}
+          </Link>
         </div>
-        <button
-          type="button"
-          className="dashboard-btn-pro h-10 w-full rounded-[10px] text-[11px] font-normal tracking-wide text-white transition hover:brightness-110"
+        <Link
+          to={upgradeTarget}
+          className="dashboard-btn-pro flex h-10 w-full items-center justify-center rounded-[10px] text-[11px] font-normal tracking-wide text-white transition hover:brightness-110"
           style={{ fontFamily: "'DM Mono', monospace" }}
         >
-          Upgrade to Pro →
-        </button>
+          {upgradeLabel}
+        </Link>
 
         <ProfileMenu variant="sidebar" />
       </div>

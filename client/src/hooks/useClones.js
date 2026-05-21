@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { cloneApi } from '../api/cloneApi.js';
 
+const CLONE_REFRESH_INTERVAL_MS = 60000;
+
 export const useClones = () => {
   const [allClones, setAllClones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +32,12 @@ export const useClones = () => {
   }, [fetchClones]);
 
   useEffect(() => {
-    const refresh = () => fetchClones({ silent: true });
-    const intervalId = window.setInterval(refresh, 15000);
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetchClones({ silent: true });
+    };
+
+    const intervalId = window.setInterval(refresh, CLONE_REFRESH_INTERVAL_MS);
     window.addEventListener('focus', refresh);
 
     return () => {
@@ -88,12 +94,13 @@ export const useClones = () => {
   const totals = allClones.reduce(
     (acc, clone) => {
       acc.messages += clone.total_messages || 0;
+      acc.currentMonthMessages += clone.current_month_messages || 0;
       acc.visitors += clone.total_visitors || 0;
       acc.sources += clone.trainingStats?.totalSources || 0;
       acc.conversations += clone.total_conversations || 0;
       return acc;
     },
-    { messages: 0, visitors: 0, sources: 0, conversations: 0 }
+    { messages: 0, currentMonthMessages: 0, visitors: 0, sources: 0, conversations: 0 }
   );
 
   return {

@@ -3,10 +3,35 @@ import { supabase } from '../lib/supabase.js';
 
 const safeCount = (result) => (result?.count && Number.isFinite(result.count) ? result.count : 0);
 
-export const getUserPlan = async (userId) => {
-  const { data } = await supabase.from('subscriptions').select('plan, status').eq('user_id', userId).maybeSingle();
+export const calculateTrainingStrength = (totalChunks = 0, limits = getPlanLimits('free')) => {
+  const chunkCount = Math.max(0, Number(totalChunks) || 0);
+  const maxChunks = Math.max(1, Number(limits?.maxTotalChunks) || getPlanLimits('free').maxTotalChunks);
+  return Math.min(Math.floor((chunkCount / maxChunks) * 100), 100);
+};
 
+export const getUserPlan = async (userId) => {
+  const result = await supabase
+    .from('subscriptions')
+    .select('plan, status, current_period_end')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (result.error?.code === 'PGRST204' || result.error?.message?.includes('current_period_end')) {
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!data || data.status !== 'active') return 'free';
+    return data.plan || 'free';
+  }
+
+  const { data } = result;
   if (!data || data.status !== 'active') return 'free';
+  if (data.current_period_end && new Date(data.current_period_end).getTime() < Date.now()) {
+    return 'free';
+  }
   return data.plan || 'free';
 };
 

@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middleware/authenticate.js';
-import { getUserPlan } from '../utils/planChecker.js';
+import { calculateTrainingStrength, getUserPlan } from '../utils/planChecker.js';
+import { getPlanLimits } from '../config/planLimits.js';
 import { supabase } from '../lib/supabase.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 
@@ -41,6 +42,9 @@ const getMessageCount = (conversation) => {
   if (!Array.isArray(conversation.messages)) return 0;
   return conversation.messages.filter((message) => message?.role === 'user').length;
 };
+
+const getMonthStart = (date = new Date()) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)).toISOString();
 
 // ── ROUTE 1: CHECK SLUG AVAILABILITY ──────────────────────────────────────────
 router.get('/check-slug/:slug', slugLimiter, authenticate, async (req, res) => {
@@ -127,8 +131,7 @@ router.post('/create', authenticate, async (req, res) => {
       logDev('getUserPlan failed, defaulting to free:', _err);
     }
 
-    const limitMap = { free: 1, pro: 3, creator: 999 };
-    const planLimit = limitMap[plan] ?? 1;
+    const planLimit = getPlanLimits(plan).maxPersonalities;
 
     if (cloneCount >= planLimit) {
       return res.status(403).json({
@@ -296,6 +299,8 @@ router.get('/list', authenticate, async (req, res) => {
 
     const cloneIds = (data || []).map((clone) => clone.id);
     let conversationStats = new Map();
+    let monthlyMessageStats = new Map();
+    let embeddingStats = new Map();
 
     if (cloneIds.length > 0) {
       const { data: conversations, error: conversationError } = await supabase
@@ -320,12 +325,58 @@ router.get('/list', authenticate, async (req, res) => {
           return acc;
         }, new Map());
       }
+
+      const monthStart = getMonthStart();
+      let monthlyResult = await supabase
+        .from('conversations')
+        .select('personality_id, message_count, messages')
+        .in('personality_id', cloneIds)
+        .gte('last_message_at', monthStart);
+
+      if (monthlyResult.error) {
+        monthlyResult = await supabase
+          .from('conversations')
+          .select('personality_id, message_count, messages')
+          .in('personality_id', cloneIds)
+          .gte('started_at', monthStart);
+      }
+
+      if (monthlyResult.error) {
+        logDev('list clone monthly message stats error:', monthlyResult.error);
+      } else {
+        monthlyMessageStats = (monthlyResult.data || []).reduce((acc, conversation) => {
+          acc.set(
+            conversation.personality_id,
+            (acc.get(conversation.personality_id) || 0) + getMessageCount(conversation)
+          );
+          return acc;
+        }, new Map());
+      }
+
+      const { data: embeddings, error: embeddingsError } = await supabase
+        .from('personality_embeddings')
+        .select('personality_id')
+        .eq('user_id', userId)
+        .in('personality_id', cloneIds);
+
+      if (embeddingsError) {
+        logDev('list clone embedding stats error:', embeddingsError);
+      } else {
+        embeddingStats = (embeddings || []).reduce((acc, embedding) => {
+          acc.set(embedding.personality_id, (acc.get(embedding.personality_id) || 0) + 1);
+          return acc;
+        }, new Map());
+      }
     }
+
+    const plan = await getUserPlan(userId);
+    const limits = getPlanLimits(plan);
 
     const clones = (data || []).map((clone) => {
       const stats = conversationStats.get(clone.id);
-      const totalChunks = clone.training_data
+      const fallbackChunks = clone.training_data
         ?.reduce((sum, td) => sum + (td.chunk_count || 0), 0) || 0;
+      const totalChunks = embeddingStats.get(clone.id) ?? fallbackChunks;
       const trainedSources = clone.training_data
         ?.filter((td) => td.status === 'trained').length || 0;
 
@@ -334,12 +385,13 @@ router.get('/list', authenticate, async (req, res) => {
         owner_avatar: ownerAvatars.get(clone.user_id) || '',
         total_conversations: stats?.totalConversations || 0,
         total_messages: stats?.totalMessages || 0,
+        current_month_messages: monthlyMessageStats.get(clone.id) || 0,
         total_visitors: stats?.visitorIds.size || 0,
         trainingStats: {
           totalChunks,
           trainedSources,
           totalSources: clone.training_data?.length || 0,
-          strengthPercent: Math.min(Math.floor((totalChunks / 100) * 100), 100)
+          strengthPercent: calculateTrainingStrength(totalChunks, limits)
         }
       };
     });

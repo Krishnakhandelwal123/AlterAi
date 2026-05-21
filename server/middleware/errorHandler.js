@@ -22,7 +22,7 @@ export class NotFoundError extends Error {
 export const errorHandler = (error, req, res, _next) => {
   const isDev = process.env.NODE_ENV !== 'production';
 
-  let status = 500;
+  let status = Number(error.statusCode || error.status || 500);
   if (error.name === 'ValidationError') status = 400;
   if (error.name === 'AuthError') status = 401;
   if (error.name === 'NotFoundError') status = 404;

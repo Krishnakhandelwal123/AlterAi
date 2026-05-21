@@ -7,7 +7,7 @@ import { checkPlan } from '../middleware/checkPlan.js';
 import { rules, validate } from '../middleware/validateRequest.js';
 import { extractText } from '../utils/fileExtractor.js';
 import { trainOnContent } from '../utils/trainer.js';
-import { checkLimit, getUserPlan, getUserUsage } from '../utils/planChecker.js';
+import { calculateTrainingStrength, checkLimit, getUserPlan, getUserUsage } from '../utils/planChecker.js';
 import { getPlanLimits } from '../config/planLimits.js';
 import { decrypt, encrypt } from '../utils/encrypt.js';
 import { supabase } from '../lib/supabase.js';
@@ -214,7 +214,7 @@ router.get('/stats/:personalityId', rules.personalityParam, validate, async (req
       .order('created_at', { ascending: false });
 
     const limits = getPlanLimits(plan);
-    const strengthPercent = Math.min(Math.floor((usage.totalChunks / limits.maxTotalChunks) * 100), 100);
+    const strengthPercent = calculateTrainingStrength(usage.totalChunks, limits);
 
     return res.json({
       success: true,

@@ -4,6 +4,19 @@ import { AuthContext } from '../context/AuthContext';
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const VISITOR_KEY = 'alter_visitor_id';
 
+const getClearedConversationKey = (slug, visitorId) => `alter_cleared_conversation:${slug}:${visitorId}`;
+
+const buildWelcomeMessage = (profile) => {
+  if (!profile?.welcome_message) return [];
+  return [{
+    id: 'welcome',
+    role: 'assistant',
+    content: profile.welcome_message,
+    timestamp: new Date().toISOString(),
+    isWelcome: true
+  }];
+};
+
 function getOrCreateVisitorId() {
   let id = localStorage.getItem(VISITOR_KEY);
   if (!id) {
@@ -54,16 +67,7 @@ export function useChat(slug) {
         } else {
           setNotFound(false);
           setPersonality(data.personality);
-          // Show welcome message
-          if (data.personality.welcome_message) {
-            setMessages([{
-              id: 'welcome',
-              role: 'assistant',
-              content: data.personality.welcome_message,
-              timestamp: new Date().toISOString(),
-              isWelcome: true
-            }]);
-          }
+          setMessages(buildWelcomeMessage(data.personality));
         }
       })
       .catch(() => setNotFound(true))
@@ -77,6 +81,14 @@ export function useChat(slug) {
       .then((r) => r.json())
       .then((data) => {
         if (data.conversation?.messages?.length > 0) {
+          const clearedConversationId = localStorage.getItem(getClearedConversationKey(slug, visitorId.current));
+          if (clearedConversationId === data.conversation.id) {
+            setMessages(buildWelcomeMessage(personality));
+            setConversationId(null);
+            setHasStarted(false);
+            return;
+          }
+
           const historyMessages = data.conversation.messages.map((m, i) => ({
             id: `hist-${i}`,
             role: m.role,
@@ -183,7 +195,10 @@ export function useChat(slug) {
                   m.id === aiMsgId ? { ...m, isStreaming: false } : m
                 )
               );
-              if (data.conversationId) setConversationId(data.conversationId);
+              if (data.conversationId) {
+                setConversationId(data.conversationId);
+                localStorage.removeItem(getClearedConversationKey(slug, visitorId.current));
+              }
               if (data.remaining !== undefined) setRemainingMessages(data.remaining);
             } else if (data.type === 'error') {
               setMessages((prev) =>
@@ -213,6 +228,22 @@ export function useChat(slug) {
     }
   }, [input, isStreaming, personality, slug, conversationId, scrollToBottom, token]);
 
+  const clearChat = useCallback(() => {
+    if (isStreaming) {
+      abortRef.current?.abort();
+    }
+    if (conversationId) {
+      localStorage.setItem(getClearedConversationKey(slug, visitorId.current), conversationId);
+    }
+    setConversationId(null);
+    setMessages(buildWelcomeMessage(personality));
+    setInput('');
+    setHasStarted(false);
+    setRateLimitInfo(null);
+    setIsStreaming(false);
+    abortRef.current = null;
+  }, [conversationId, isStreaming, personality, slug]);
+
   return {
     personality,
     loading,
@@ -226,6 +257,7 @@ export function useChat(slug) {
     remainingMessages,
     visitorId: visitorId.current,
     messagesEndRef,
-    sendMessage
+    sendMessage,
+    clearChat
   };
 }

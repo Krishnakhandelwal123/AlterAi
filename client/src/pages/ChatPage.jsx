@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Copy, ExternalLink, Mic2, ShieldCheck, Sparkles, Volume2 } from 'lucide-react';
+import { Copy, ExternalLink, Mic2, RotateCcw, ShieldCheck, Sparkles, Volume2 } from 'lucide-react';
 import { useChat } from '../hooks/useChat';
 import PersonalityHeader from '../components/chat/PersonalityHeader';
 import MessageBubble from '../components/chat/MessageBubble';
@@ -30,7 +30,8 @@ const ChatPage = () => {
     rateLimitInfo,
     remainingMessages,
     messagesEndRef,
-    sendMessage
+    sendMessage,
+    clearChat
   } = useChat(slug);
 
   useEffect(() => {
@@ -122,10 +123,14 @@ const ChatPage = () => {
       <header className="chat-brand-bar">
         <Link to="/" className="chat-logo">ALTER</Link>
         <div className="chat-bar-actions">
-          <button type="button" onClick={copyCurrentLink} aria-label="Copy chat link">
+          <button type="button" onClick={clearChat} className="clear-chat-button" aria-label="Clear chat and start fresh">
+            <RotateCcw className="h-4 w-4" />
+            <span>Clear</span>
+          </button>
+          <button type="button" onClick={copyCurrentLink} className="icon-action" aria-label="Copy chat link">
             <Copy className="h-4 w-4" />
           </button>
-          <button type="button" aria-label="Voice mode preview" disabled>
+          <button type="button" className="icon-action" aria-label="Voice mode preview" disabled>
             <Volume2 className="h-4 w-4" />
           </button>
           <button type="button" onClick={() => navigate('/auth')} className="create-link">
@@ -304,6 +309,18 @@ const ChatPage = () => {
           background: rgba(0,212,255,0.1);
           color: rgba(0,212,255,0.94);
           font: 11px 'DM Mono', monospace;
+        }
+        .chat-bar-actions .clear-chat-button {
+          min-width: 0;
+          padding: 0 13px;
+          border-color: rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.76);
+          font: 11px 'DM Mono', monospace;
+        }
+        .chat-bar-actions .clear-chat-button:hover {
+          border-color: rgba(0,212,255,0.34);
+          background: rgba(0,212,255,0.08);
+          color: rgba(0,212,255,0.92);
         }
         .chat-stage {
           flex: 1;
@@ -509,8 +526,13 @@ const ChatPage = () => {
             font-size: 15px;
             letter-spacing: 0.28em;
           }
-          .chat-bar-actions button:not(.create-link) {
+          .chat-bar-actions .icon-action {
             display: none;
+          }
+          .chat-bar-actions .clear-chat-button {
+            height: 34px;
+            padding: 0 10px;
+            font-size: 10px;
           }
           .chat-bar-actions .create-link {
             height: 34px;

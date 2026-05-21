@@ -16,6 +16,7 @@ import cloneRoutes from './routes/clone.js';
 import chatRoutes from './routes/chat.js';
 import analyticsRoutes from './routes/analytics.js';
 import shareRoutes from './routes/share.js';
+import billingRoutes, { billingWebhook } from './routes/billing.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, NotFoundError } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
@@ -27,6 +28,7 @@ const PORT = Number(process.env.PORT || 3001);
 
 app.use(helmet());
 app.use(cors({ origin: CLIENT_URL, credentials: true }));
+app.post('/api/billing/webhook', express.raw({ type: 'application/json', limit: '1mb' }), billingWebhook);
 app.use(express.json({ limit: '10kb' }));
 app.use(morgan('dev'));
 app.use(logger);
@@ -39,6 +41,7 @@ app.use('/api/clone', cloneRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/api/billing', billingRoutes);
 
 app.use((req, res, next) => {
   if (req.path === '/health') {

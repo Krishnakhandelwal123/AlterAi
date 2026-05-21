@@ -3,6 +3,9 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { supabase } from '../lib/supabase.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { embedChunks } from '../utils/ai.js';
+import { retrieveRelevantContext } from '../utils/retrieval.js';
+import { getPlanLimits } from '../config/planLimits.js';
+import { getUserPlan } from '../utils/planChecker.js';
 import { GoogleGenAI } from '@google/genai';
 
 const router = Router();
@@ -19,7 +22,6 @@ const getAIClient = () => {
   return _ai;
 };
 
-const DAILY_LIMIT = 20;
 const CHAT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 const chatRateLimiter = rateLimit({
@@ -38,6 +40,41 @@ const chatRateLimiter = rateLimit({
 
 const sanitize = (str, max = 1000) =>
   typeof str === 'string' ? str.slice(0, max).replace(/<script|<\/script/gi, '') : '';
+
+const getMonthStart = (date = new Date()) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)).toISOString();
+
+const sumMessageCount = (rows = []) =>
+  rows.reduce((sum, row) => sum + (Number(row.message_count) || 0), 0);
+
+const getCreatorMonthlyMessageCount = async (creatorId, monthStart = getMonthStart()) => {
+  const { data: clones, error: clonesError } = await supabase
+    .from('personalities')
+    .select('id')
+    .eq('user_id', creatorId);
+
+  if (clonesError) throw clonesError;
+
+  const cloneIds = (clones || []).map((clone) => clone.id).filter(Boolean);
+  if (cloneIds.length === 0) return 0;
+
+  const byLastMessage = await supabase
+    .from('conversations')
+    .select('message_count')
+    .in('personality_id', cloneIds)
+    .gte('last_message_at', monthStart);
+
+  if (!byLastMessage.error) return sumMessageCount(byLastMessage.data || []);
+
+  const byStartedAt = await supabase
+    .from('conversations')
+    .select('message_count')
+    .in('personality_id', cloneIds)
+    .gte('started_at', monthStart);
+
+  if (byStartedAt.error) throw byStartedAt.error;
+  return sumMessageCount(byStartedAt.data || []);
+};
 
 const getChatErrorMessage = (error) => {
   const message = error?.message || '';
@@ -154,6 +191,10 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
   }
 
   const isOwner = requestingUser?.id === personality.user_id;
+  const ownerPlan = await getUserPlan(personality.user_id);
+  const planLimits = getPlanLimits(ownerPlan);
+  const dailyLimit = planLimits.maxVisitorMessagesPerDay;
+  const monthlyLimit = planLimits.maxCreatorMessagesPerMonth;
 
   // If clone is not public, only allow the owner to message/test it
   if (!personality.is_public) {
@@ -173,12 +214,26 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
   if (!isOwner && usageRow) {
     const windowAge = Date.now() - new Date(usageRow.window_start).getTime();
     const isNewWindow = windowAge > 24 * 60 * 60 * 1000;
-    if (!isNewWindow && usageRow.message_count >= DAILY_LIMIT) {
+    if (!isNewWindow && usageRow.message_count >= dailyLimit) {
       return res.status(429).json({
-        error: `Daily limit of ${DAILY_LIMIT} messages reached. Come back tomorrow!`,
+        error: `Daily limit of ${dailyLimit} messages reached. Come back tomorrow!`,
         code: 'RATE_LIMIT_REACHED',
-        limit: DAILY_LIMIT,
+        period: 'day',
+        limit: dailyLimit,
         resetAt: new Date(new Date(usageRow.window_start).getTime() + 24 * 60 * 60 * 1000).toISOString()
+      });
+    }
+  }
+
+  if (monthlyLimit) {
+    const creatorMonthlyMessages = await getCreatorMonthlyMessageCount(personality.user_id);
+    if (creatorMonthlyMessages >= monthlyLimit) {
+      return res.status(429).json({
+        error: `Monthly creator message limit of ${monthlyLimit.toLocaleString()} reached for this clone owner.`,
+        code: 'CREATOR_MONTHLY_LIMIT_REACHED',
+        period: 'month',
+        limit: monthlyLimit,
+        used: creatorMonthlyMessages
       });
     }
   }
@@ -195,22 +250,16 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
   };
 
   try {
-    // RAG: embed query + vector search
-    let contextText = '';
-    try {
-      const [queryVec] = await embedChunks([cleanMessage]);
-      const { data: chunks } = await supabase.rpc('match_personality_embeddings', {
-        query_embedding: queryVec,
-        match_threshold: 0.3,
-        match_count: 5,
-        p_personality_id: personality.id
-      });
-      contextText = chunks?.map((c) => c.chunk_text).join('\n\n') || '';
-    } catch (ragErr) {
-      console.warn('[chat] RAG skipped:', ragErr.message);
-    }
+    const contextText = await retrieveRelevantContext({
+      supabase,
+      personalityId: personality.id,
+      query: cleanMessage,
+      embedChunks,
+      logger: console
+    });
 
-    // Load conversation history (last 6 messages = 3 turns)
+    // Load full conversation for analytics, but only send recent turns to the model.
+    let storedMessages = [];
     let history = [];
     if (conversationId) {
       const { data: conv } = await supabase
@@ -218,7 +267,8 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
         .select('messages')
         .eq('id', conversationId)
         .maybeSingle();
-      history = (conv?.messages || []).slice(-6);
+      storedMessages = Array.isArray(conv?.messages) ? conv.messages : [];
+      history = storedMessages.slice(-6);
     }
 
     // Build system prompt
@@ -233,6 +283,9 @@ ${personality.avoid ? `- Never discuss: ${personality.avoid}` : ''}
 RULES:
 - Always respond in first person as ${personality.name}
 - You ARE ${personality.name} — never break character
+- For factual questions about ${personality.name}, use RELEVANT KNOWLEDGE as the source of truth
+- Do not invent experience, employers, projects, dates, education, skills, or achievements not present in RELEVANT KNOWLEDGE
+- If RELEVANT KNOWLEDGE does not contain the answer, say you do not have that detail in your training data
 - If asked if you are AI: say "I'm an AI version of ${personality.name}, trained on their real content"
 - Keep responses conversational, under 150 words unless genuinely needed
 - Match the tone: ${personality.tone || 'friendly'}
@@ -270,7 +323,7 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
 
     // Persist conversation
     const newMessages = [
-      ...history,
+      ...storedMessages,
       { role: 'user', content: cleanMessage },
       { role: 'assistant', content: fullResponse }
     ];
@@ -281,7 +334,7 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
         .from('conversations')
         .update({
           messages: newMessages,
-          message_count: Math.floor(newMessages.length / 2),
+          message_count: newMessages.filter((message) => message?.role === 'user').length,
           last_message_at: new Date().toISOString()
         })
         .eq('id', conversationId);
@@ -292,7 +345,8 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
           personality_id: personality.id,
           visitor_id: visitorId,
           messages: newMessages,
-          message_count: 1
+          message_count: 1,
+          last_message_at: new Date().toISOString()
         })
         .select('id')
         .single();
@@ -329,7 +383,7 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
     sendEvent({
       type: 'done',
       conversationId: savedConvId,
-      remaining: isOwner ? DAILY_LIMIT : Math.max(0, DAILY_LIMIT - newCount)
+      remaining: isOwner ? dailyLimit : Math.max(0, dailyLimit - newCount)
     });
     res.end();
   } catch (err) {

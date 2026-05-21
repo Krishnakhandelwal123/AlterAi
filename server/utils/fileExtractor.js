@@ -1,9 +1,7 @@
 import { Readable } from 'stream';
 import csv from 'csv-parser';
 import mammoth from 'mammoth';
-import * as pdfParseLib from 'pdf-parse';
-
-const pdfParse = pdfParseLib.default || pdfParseLib;
+import { PDFParse } from 'pdf-parse';
 
 const parseCsv = (buffer) =>
   new Promise((resolve, reject) => {
@@ -21,8 +19,13 @@ export const extractText = async (buffer, mimetype, filename) => {
   const ext = filename.split('.').pop()?.toLowerCase();
 
   if (mimetype === 'application/pdf' || ext === 'pdf') {
-    const parsed = await pdfParse(buffer);
-    return parsed.text || '';
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const parsed = await parser.getText();
+      return parsed.text || '';
+    } finally {
+      await parser.destroy();
+    }
   }
   if (ext === 'docx') {
     const result = await mammoth.extractRawText({ buffer });

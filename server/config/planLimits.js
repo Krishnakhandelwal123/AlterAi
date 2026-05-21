@@ -15,7 +15,9 @@ export const PLAN_LIMITS = {
     allowInstagram: false,
     maxLinks: 2,
     maxTotalChunks: 100,
-    maxPersonalities: 1
+    maxPersonalities: 1,
+    maxVisitorMessagesPerDay: 10,
+    maxCreatorMessagesPerMonth: 200
   },
   pro: {
     maxTextChars: 20000,
@@ -33,7 +35,9 @@ export const PLAN_LIMITS = {
     allowInstagram: false,
     maxLinks: 10,
     maxTotalChunks: 500,
-    maxPersonalities: 3
+    maxPersonalities: 5,
+    maxVisitorMessagesPerDay: 50,
+    maxCreatorMessagesPerMonth: 7500
   },
   creator: {
     maxTextChars: 100000,
@@ -51,7 +55,9 @@ export const PLAN_LIMITS = {
     allowInstagram: true,
     maxLinks: 50,
     maxTotalChunks: 2000,
-    maxPersonalities: 999
+    maxPersonalities: 50,
+    maxVisitorMessagesPerDay: 100,
+    maxCreatorMessagesPerMonth: 20000
   }
 };
 
