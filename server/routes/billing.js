@@ -5,6 +5,7 @@ import { getBillingPlan, getPublicBillingPlans } from '../config/billingPlans.js
 import { getPlanLimits } from '../config/planLimits.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { getUserPlan } from '../utils/planChecker.js';
+import { safeSendEmail, sendSubscriptionSuccessEmail } from '../services/emailService.js';
 
 const router = Router();
 
@@ -204,6 +205,27 @@ const activateSubscription = async ({ orderRow, payment, signature = null }) => 
   }
 
   if (subscriptionResult.error) throw subscriptionResult.error;
+
+  const { data: userProfile } = await supabaseAdmin
+    .from('users')
+    .select('email, name')
+    .eq('id', orderRow.user_id)
+    .maybeSingle();
+
+  void safeSendEmail(
+    sendSubscriptionSuccessEmail({
+      to: userProfile?.email,
+      name: userProfile?.name,
+      plan: orderRow.plan,
+      amount: orderRow.amount,
+      currency: orderRow.currency,
+      paymentId: payment.id,
+      currentPeriodStart: subscriptionPayload.current_period_start,
+      currentPeriodEnd: subscriptionPayload.current_period_end
+    }),
+    'subscription success email'
+  );
+
   return subscriptionResult.data;
 };
 

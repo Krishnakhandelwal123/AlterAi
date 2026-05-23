@@ -151,6 +151,7 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
   const extraTopics = topics.length - 3;
   const isDraft = status === 'draft';
   const hasNoTraining = totalSources === 0;
+  const isLive = status === 'live';
 
   return (
     <>
@@ -551,7 +552,11 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
           {[
             {
               label: 'Preview Chat',
-              onClick: () => window.open(`/chat/${slug}`, '_blank')
+              onClick: () => {
+                if (isLive) window.open(`/chat/${slug}`, '_blank');
+              },
+              disabled: !isLive,
+              title: isLive ? 'Open public chat' : 'Publish this clone before opening chat'
             },
             {
               label: copied ? 'Copied! ✓' : 'Copy Link',
@@ -567,28 +572,31 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
               key={btn.label}
               type="button"
               onClick={btn.onClick}
+              disabled={btn.disabled}
+              title={btn.title}
               style={{
                 flex: 1,
                 height: 34,
-                background: 'transparent',
+                background: btn.disabled ? 'rgba(255,255,255,0.025)' : 'transparent',
                 border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 8,
                 fontFamily: "'DM Mono', monospace",
                 fontSize: 10,
                 color: btn.green ? '#059669' : 'rgba(255,255,255,0.5)',
-                cursor: 'pointer',
+                cursor: btn.disabled ? 'not-allowed' : 'pointer',
+                opacity: btn.disabled ? 0.45 : 1,
                 transition: 'all 200ms',
                 padding: '0 14px',
                 whiteSpace: 'nowrap'
               }}
               onMouseEnter={(e) => {
-                if (!btn.green) {
+                if (!btn.green && !btn.disabled) {
                   e.currentTarget.style.borderColor = 'rgba(0,212,255,0.3)';
                   e.currentTarget.style.color = 'rgba(0,212,255,0.88)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (!btn.green) {
+                if (!btn.green && !btn.disabled) {
                   e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
                   e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
                 }

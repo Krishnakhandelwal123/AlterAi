@@ -79,6 +79,16 @@ export const useClones = () => {
     return result;
   };
 
+  const updateClone = async (cloneId, formData) => {
+    const result = await cloneApi.update(cloneId, formData);
+    if (result.success) {
+      setAllClones((prev) =>
+        prev.map((c) => (c.id === cloneId ? { ...c, ...result.clone } : c))
+      );
+    }
+    return result;
+  };
+
   // Counts always calculated from ALL clones, not the filtered subset
   const counts = allClones.reduce(
     (acc, c) => {
@@ -114,6 +124,7 @@ export const useClones = () => {
     totals,
     refetch: fetchClones,
     createClone,
+    updateClone,
     deleteClone,
     publishClone
   };

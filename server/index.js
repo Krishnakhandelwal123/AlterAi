@@ -20,6 +20,7 @@ import billingRoutes, { billingWebhook } from './routes/billing.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, NotFoundError } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
+import { startSubscriptionReminderJob } from './jobs/subscriptionReminders.js';
 
 const app = express();
 
@@ -58,6 +59,8 @@ if (process.env.NODE_ENV !== 'test') {
     // eslint-disable-next-line no-console
     console.log(`Server running on ${PORT}`);
   });
+
+  startSubscriptionReminderJob();
 
   process.on('SIGTERM', () => {
     if (server) {

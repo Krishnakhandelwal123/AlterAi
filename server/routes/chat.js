@@ -98,21 +98,6 @@ router.get('/:slug/profile', async (req, res) => {
   try {
     const { slug } = req.params;
 
-    // Check if requester is authenticated (for previewing draft/private clones)
-    let requestingUser = null;
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (token) {
-      try {
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-        if (!authError && user) {
-          requestingUser = user;
-        }
-      } catch (e) {
-        console.warn('[chat] auth extraction failed in preview mode:', e.message);
-      }
-    }
-
     const { data: personality, error } = await supabase
       .from('personalities')
       .select('id, name, slug, bio, tone, topics, avatar_color, welcome_message, created_at, user_id, is_public')
@@ -123,11 +108,9 @@ router.get('/:slug/profile', async (req, res) => {
       return res.status(404).json({ error: 'Clone not found or not public', code: 'NOT_FOUND' });
     }
 
-    // If clone is not public, only allow the owner to view/preview it
+    // Chat pages are only available after the creator publishes the clone.
     if (!personality.is_public) {
-      if (!requestingUser || requestingUser.id !== personality.user_id) {
-        return res.status(404).json({ error: 'Clone not found or not public yet', code: 'NOT_FOUND' });
-      }
+      return res.status(404).json({ error: 'Clone not found or not public yet', code: 'NOT_FOUND' });
     }
 
     const { data: owner } = await supabaseAdmin
@@ -196,11 +179,9 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
   const dailyLimit = planLimits.maxVisitorMessagesPerDay;
   const monthlyLimit = planLimits.maxCreatorMessagesPerMonth;
 
-  // If clone is not public, only allow the owner to message/test it
+  // Chat messages are blocked until the clone is live/public.
   if (!personality.is_public) {
-    if (!requestingUser || requestingUser.id !== personality.user_id) {
-      return res.status(404).json({ error: 'Clone not found or not live' });
-    }
+    return res.status(404).json({ error: 'Clone not found or not live' });
   }
 
   // Check visitor rate limit

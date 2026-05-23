@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { useClones } from '../../hooks/useClones.js';
 import CreateCloneModal from '../../components/clones/CreateCloneModal.jsx';
+import EditCloneModal from '../../components/clones/EditCloneModal.jsx';
 import CloneGrid from '../../components/clones/CloneGrid.jsx';
 
 const FILTERS = [
@@ -14,9 +15,10 @@ const FILTERS = [
 ];
 
 const MyClones = () => {
-  const { clones, loading, error, filter, setFilter, counts, refetch, createClone, deleteClone, publishClone } = useClones();
+  const { clones, loading, error, filter, setFilter, counts, refetch, createClone, updateClone, deleteClone, publishClone } = useClones();
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState(null);
@@ -44,6 +46,22 @@ const MyClones = () => {
   const handlePublish = async (id, publish) => {
     const result = await publishClone(id, publish);
     if (result?.success) showToast(result.message || (publish ? 'Clone is now live!' : 'Clone set to draft.'));
+    else if (result?.error) showToast(result.error, '#EF4444');
+    return result;
+  };
+
+  const handleEdit = (id) => {
+    const clone = clones.find((item) => item.id === id);
+    if (!clone) {
+      showToast('Clone not found. Refresh and try again.', '#EF4444');
+      return;
+    }
+    setEditTarget(clone);
+  };
+
+  const handleUpdate = async (id, payload) => {
+    const result = await updateClone(id, payload);
+    if (result?.success) showToast('Clone updated.');
     else if (result?.error) showToast(result.error, '#EF4444');
     return result;
   };
@@ -115,7 +133,7 @@ const MyClones = () => {
           filter={filter}
           onDelete={(id) => setDeleteTarget(id)}
           onPublish={handlePublish}
-          onEdit={() => {}}
+          onEdit={handleEdit}
           onShare={(clone) => navigate(`/dashboard/share/${clone.id}`)}
           onRetry={refetch}
         />
@@ -133,6 +151,14 @@ const MyClones = () => {
             }
             return result;
           }}
+        />
+      )}
+
+      {editTarget && (
+        <EditCloneModal
+          clone={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSave={handleUpdate}
         />
       )}
 

@@ -13,6 +13,14 @@ create table if not exists public.subscriptions (
   unique (user_id)
 );
 
+alter table public.subscriptions
+  add column if not exists provider text,
+  add column if not exists provider_order_id text,
+  add column if not exists provider_payment_id text,
+  add column if not exists current_period_start timestamptz,
+  add column if not exists current_period_end timestamptz,
+  add column if not exists updated_at timestamptz not null default now();
+
 create table if not exists public.payment_orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,

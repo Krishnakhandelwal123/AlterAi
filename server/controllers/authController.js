@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { AuthError } from '../middleware/errorHandler.js';
 import { parseVerifyTokenBody } from '../schemas/authSchemas.js';
+import { safeSendEmail, sendWelcomeEmail } from '../services/emailService.js';
 
 const mapProfile = (profile, user) => ({
   id: profile?.id || user.id,
@@ -45,6 +46,13 @@ export const verifyToken = async (req, res, next) => {
       isNewUser = true;
       const { data: created } = await supabaseAdmin.from('users').insert(payload).select('*').single();
       profile = created;
+      void safeSendEmail(
+        sendWelcomeEmail({
+          to: payload.email,
+          name: payload.name
+        }),
+        'welcome email'
+      );
     }
 
     return res.json({ user: mapProfile(profile, user), isNewUser });

@@ -412,6 +412,18 @@ html.has-scroll-smooth body {
   }
 }
 
+/* Scrollable areas without visible scrollbars */
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 /* Dashboard sidebar: visible thin scrollbar (overrides global hidden scrollbars) */
 .dashboard-sidebar-nav {
   scrollbar-width: thin;
