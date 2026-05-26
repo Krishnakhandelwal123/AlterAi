@@ -1,5 +1,8 @@
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { safeSendEmail, sendSubscriptionReminderEmail } from '../services/emailService.js';
+import { createNotification, shouldSendUserEmail } from '../services/notificationService.js';
+
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_REMINDER_DAYS = [7, 3, 1];
@@ -81,16 +84,27 @@ export const runSubscriptionReminderScan = async () => {
         continue;
       }
 
-      await safeSendEmail(
-        sendSubscriptionReminderEmail({
-          to: user.email,
-          name: user.name,
-          plan: subscription.plan,
-          currentPeriodEnd: subscription.current_period_end,
-          daysRemaining
-        }),
-        `subscription reminder ${daysRemaining}d`
-      );
+      const emailAllowed = await shouldSendUserEmail(subscription.user_id, 'billingAlerts');
+      if (emailAllowed) {
+        await safeSendEmail(
+          sendSubscriptionReminderEmail({
+            to: user.email,
+            name: user.name,
+            plan: subscription.plan,
+            currentPeriodEnd: subscription.current_period_end,
+            daysRemaining
+          }),
+          `subscription reminder ${daysRemaining}d`
+        );
+      }
+
+      void createNotification({
+        userId: subscription.user_id,
+        type: 'billing_reminder',
+        title: `Plan renews in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`,
+        body: `Your ${subscription.plan} subscription renews soon. Review billing to avoid interruption.`,
+        link: `${CLIENT_URL}/dashboard/billing`
+      });
     }
   }
 };

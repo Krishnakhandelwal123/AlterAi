@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, Lock } from 'lucide-react';
 import { dashboardNavSections } from './navConfig';
 import ProfileMenu from './ProfileMenu';
 import { useClones } from '../../hooks/useClones.js';
@@ -10,8 +10,9 @@ const linkBase =
   'group flex items-center gap-3 px-5 py-2.5 font-dashboard-nav text-[11px] tracking-wide text-white/40 transition-colors border-l-2 border-transparent';
 
 const DashboardSidebar = () => {
-  const { totals } = useClones();
+  const { clones, totals } = useClones();
   const { currentPlan, limits } = useBillingSubscription();
+  const hasActiveVoice = clones.some((clone) => clone.voice_enabled);
   const usedMessages = totals.currentMonthMessages || 0;
   const messageLimit = limits?.maxCreatorMessagesPerMonth || 200;
   const usagePercent = Math.min(100, Math.round((usedMessages / messageLimit) * 100));
@@ -100,7 +101,15 @@ const DashboardSidebar = () => {
                     >
                       <item.icon className="h-4 w-4" strokeWidth={1.5} />
                     </span>
-                    {item.label}
+                    <span className="flex flex-1 items-center gap-2">
+                      {item.label}
+                      {item.to === '/dashboard/voice' && currentPlan !== 'creator' && (
+                        <Lock className="h-3 w-3 text-white/25" title="Creator Plan Required" />
+                      )}
+                      {item.to === '/dashboard/voice' && hasActiveVoice && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#059669]" title="Voice active" />
+                      )}
+                    </span>
                   </NavLink>
                 </li>
               ))}

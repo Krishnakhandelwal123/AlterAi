@@ -48,7 +48,7 @@ const Home = () => {
         <section data-scroll-section className="flex flex-col justify-center items-center px-6 py-32">
           <h2 className="mb-4 text-4xl font-bold">Join the Waitlist</h2>
           <p className="mb-8 max-w-md text-center text-secondary">
-            Be the first to know about upcoming Alter Titan enterprise editions and experimental builds.
+            Be the first to know when we open public access, new integrations, and Creator-tier features.
           </p>
           <Link to="/auth" className="px-10 py-4 rounded-full transition-all duration-300 glass hover:bg-white hover:text-black hover:scale-105">
             Request Access

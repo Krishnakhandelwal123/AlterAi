@@ -406,6 +406,290 @@ html.has-scroll-smooth body {
   top: 0;
 }
 
+.notification-bell-btn {
+  position: relative;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.notification-bell-btn:hover,
+.notification-bell-btn.is-open {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.notification-bell-badge {
+  position: absolute;
+  right: 0.2rem;
+  top: 0.15rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.92);
+  color: #080808;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  box-shadow: 0 0 0 2px #080808;
+}
+
+.notification-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 50;
+  width: min(380px, calc(100vw - 24px));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(12, 12, 14, 0.98);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(16px);
+}
+
+.notification-panel-head,
+.notification-panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-panel-foot {
+  border-bottom: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-panel-foot button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgba(0, 212, 255, 0.88);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.notification-panel-eyebrow {
+  margin: 0 0 4px;
+  color: rgba(255, 255, 255, 0.34);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.notification-panel-head h3 {
+  margin: 0;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 300;
+}
+
+.notification-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notification-panel-text-btn,
+.notification-panel-icon-btn {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.notification-panel-text-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notification-panel-text-btn:hover,
+.notification-panel-icon-btn:hover {
+  color: rgba(0, 212, 255, 0.9);
+}
+
+.notification-panel-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.notification-panel-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.notification-panel-body {
+  max-height: min(420px, 58vh);
+  overflow-y: auto;
+}
+
+.notification-panel-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 36px 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.notification-panel-state strong {
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.notification-panel-state.is-error {
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.notification-panel-state button {
+  margin-top: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.notification-panel-spin {
+  animation: settingsSpin 1s linear infinite;
+}
+
+.notification-item {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notification-item.is-unread {
+  background: rgba(0, 212, 255, 0.04);
+}
+
+.notification-item-main {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  padding: 14px 8px 14px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-item-main:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.notification-item-icon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.notification-item-copy {
+  min-width: 0;
+}
+
+.notification-item-copy strong {
+  display: block;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.notification-item-copy p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.46);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.notification-item-copy small {
+  display: block;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.28);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+
+.notification-item-tools {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding-right: 8px;
+}
+
+.settings-notif-group {
+  margin-top: 22px;
+}
+
+.settings-notif-group:first-of-type {
+  margin-top: 0;
+}
+
+.settings-notif-group h3 {
+  margin: 0 0 6px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings-notif-group > p {
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.34);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.settings-toggle-desc {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.32);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
 @media (max-width: 767px) {
   .dashboard-mobile-nav {
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);

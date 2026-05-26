@@ -7,6 +7,7 @@ import { retrieveRelevantContext } from '../utils/retrieval.js';
 import { getPlanLimits } from '../config/planLimits.js';
 import { getUserPlan } from '../utils/planChecker.js';
 import { GoogleGenAI } from '@google/genai';
+import { notifyNewConversation } from '../services/notificationService.js';
 
 const router = Router();
 
@@ -100,7 +101,7 @@ router.get('/:slug/profile', async (req, res) => {
 
     const { data: personality, error } = await supabase
       .from('personalities')
-      .select('id, name, slug, bio, tone, topics, avatar_color, welcome_message, created_at, user_id, is_public')
+      .select('id, name, slug, bio, tone, topics, avatar_color, welcome_message, created_at, user_id, is_public, voice_enabled')
       .eq('slug', slug)
       .single();
 
@@ -332,6 +333,15 @@ ${contextText ? `\nRELEVANT KNOWLEDGE:\n${contextText}` : ''}`.trim();
         .select('id')
         .single();
       savedConvId = newConv?.id;
+
+      if (!isOwner && newConv?.id) {
+        void notifyNewConversation({
+          userId: personality.user_id,
+          cloneName: personality.name,
+          slug: personality.slug,
+          preview: cleanMessage
+        });
+      }
     }
 
     // Update visitor usage

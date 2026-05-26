@@ -25,7 +25,7 @@ const Footer = () => {
              <span className="text-xl font-bold tracking-tighter text-white">ALTER AI</span>
           </div>
           <p className="text-secondary text-sm leading-relaxed mb-8 max-w-xs">
-            Redefining the boundaries between carbon and silicon. Intelligence, embodied.
+            Train an AI on your voice and knowledge. Share a link. Let your clone answer 24/7.
           </p>
           <div className="flex gap-4">
              {[Twitter, Instagram, Github].map((Icon, i) => (
@@ -36,11 +36,11 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Column 2: Models */}
+        {/* Column 2: Plans */}
         <div>
-          <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Models</h4>
+          <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Plans</h4>
           <ul className="space-y-4">
-            {['Alter One', 'Alter X', 'Alter Titan'].map((item) => (
+            {['Free', 'Pro', 'Creator'].map((item) => (
               <li key={item}>
                 <a href="#" className="text-secondary hover:text-white transition-colors text-sm">{item}</a>
               </li>
@@ -63,7 +63,7 @@ const Footer = () => {
         {/* Column 4: Newsletter */}
         <div>
           <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Innovation Lab</h4>
-          <p className="text-secondary text-sm mb-6">Stay updated with our weekly patches and neural upgrades.</p>
+          <p className="text-secondary text-sm mb-6">Product updates, launch notes, and new clone features.</p>
           <div className="relative">
             <input 
               type="email" 
@@ -80,7 +80,7 @@ const Footer = () => {
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 mt-32 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
         <p className="text-white/20 text-xs uppercase tracking-[0.2em]">
-          &copy; 2026 ALTER AI ROBOTICS CO.
+          &copy; 2026 ALTER AI
         </p>
         <p className="text-white/40 text-xs italic">
           Designed for the future.

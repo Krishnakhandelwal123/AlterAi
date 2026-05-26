@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alter AI Widget Demo</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, system-ui, sans-serif;
+        background: linear-gradient(160deg, #f4f1ff, #e8f4ff);
+        color: #0f172a;
+        padding: 48px 24px 120px; 
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        font-style: italic;
+      }
+      p {
+        line-height: 1.7;
+        color: rgba(15, 23, 42, 0.72);
+      }
+      code {
+        display: block;
+        margin-top: 24px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #111;
+        color: #e2e8f0;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Widget embed demo</h1>
+      <p>
+        Replace <strong>YOUR_SLUG</strong> in the script below with a public clone slug, then open this page from your
+        Vite dev server (e.g. <code>http://localhost:5173/embed-demo.html</code>).
+      </p>
+      <code>&lt;script src="/widget.js" data-slug="YOUR_SLUG" data-theme="dark" data-position="bottom-right" data-color="#00D4FF" data-label="Chat with AI" async&gt;&lt;/script&gt;</code>
+    </main>
+    <!-- Set data-slug to your live clone slug -->
+    <script
+      src="/widget.js"
+      data-slug="YOUR_SLUG"
+      data-theme="dark"
+      data-position="bottom-right"
+      data-color="#00D4FF"
+      data-label="Chat with AI"
+      async
+    ></script>
+  </body>
+</html>

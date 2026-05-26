@@ -5,6 +5,7 @@ import { calculateTrainingStrength, getUserPlan } from '../utils/planChecker.js'
 import { getPlanLimits } from '../config/planLimits.js';
 import { supabase } from '../lib/supabase.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
+import { notifyClonePublished } from '../services/notificationService.js';
 
 const router = Router();
 
@@ -548,6 +549,13 @@ router.patch('/:cloneId/publish', authenticate, async (req, res) => {
       .select('avatar')
       .eq('id', data.user_id)
       .maybeSingle();
+
+    void notifyClonePublished({
+      userId,
+      cloneName: data.name,
+      slug: data.slug,
+      published: publish
+    });
 
     return res.json({
       success: true,

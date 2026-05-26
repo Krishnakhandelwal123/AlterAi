@@ -6,6 +6,7 @@ import { getPlanLimits } from '../config/planLimits.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { getUserPlan } from '../utils/planChecker.js';
 import { safeSendEmail, sendSubscriptionSuccessEmail } from '../services/emailService.js';
+import { notifyBillingSuccess, shouldSendUserEmail } from '../services/notificationService.js';
 
 const router = Router();
 
@@ -212,19 +213,24 @@ const activateSubscription = async ({ orderRow, payment, signature = null }) => 
     .eq('id', orderRow.user_id)
     .maybeSingle();
 
-  void safeSendEmail(
-    sendSubscriptionSuccessEmail({
-      to: userProfile?.email,
-      name: userProfile?.name,
-      plan: orderRow.plan,
-      amount: orderRow.amount,
-      currency: orderRow.currency,
-      paymentId: payment.id,
-      currentPeriodStart: subscriptionPayload.current_period_start,
-      currentPeriodEnd: subscriptionPayload.current_period_end
-    }),
-    'subscription success email'
-  );
+  const emailAllowed = await shouldSendUserEmail(orderRow.user_id, 'billingAlerts');
+  if (emailAllowed) {
+    void safeSendEmail(
+      sendSubscriptionSuccessEmail({
+        to: userProfile?.email,
+        name: userProfile?.name,
+        plan: orderRow.plan,
+        amount: orderRow.amount,
+        currency: orderRow.currency,
+        paymentId: payment.id,
+        currentPeriodStart: subscriptionPayload.current_period_start,
+        currentPeriodEnd: subscriptionPayload.current_period_end
+      }),
+      'subscription success email'
+    );
+  }
+
+  void notifyBillingSuccess({ userId: orderRow.user_id, plan: orderRow.plan });
 
   return subscriptionResult.data;
 };
@@ -320,22 +326,40 @@ router.get('/subscription', async (req, res, next) => {
 
     if (result.error) throw result.error;
 
-    const plan = result.data?.status === 'active' ? result.data.plan : await getUserPlan(req.user.id);
+    const resolvedPlan = await getUserPlan(req.user.id);
     return res.json({
       success: true,
-      subscription: mapSubscription(result.data, plan),
-      limits: getPlanLimits(plan)
+      subscription: mapSubscription(result.data, resolvedPlan),
+      limits: getPlanLimits(resolvedPlan)
     });
   } catch (error) {
     return next(error);
   }
 });
 
+const PLAN_RANK = { free: 0, pro: 1, creator: 2 };
+
 router.post('/orders', async (req, res, next) => {
   try {
     const plan = getBillingPlan(req.body?.plan);
     if (!plan) {
       return res.status(400).json({ success: false, error: 'Invalid billing plan' });
+    }
+
+    const currentPlan = await getUserPlan(req.user.id);
+    const currentRank = PLAN_RANK[currentPlan] ?? 0;
+    const targetRank = PLAN_RANK[plan.id] ?? 0;
+
+    if (targetRank <= currentRank) {
+      return res.status(400).json({
+        success: false,
+        error:
+          targetRank === currentRank
+            ? `You are already on the ${plan.name} plan.`
+            : `You are on the ${currentPlan} plan. Downgrades are not available through checkout.`,
+        code: targetRank === currentRank ? 'ALREADY_SUBSCRIBED' : 'DOWNGRADE_NOT_ALLOWED',
+        currentPlan
+      });
     }
 
     const receipt = `alt_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;

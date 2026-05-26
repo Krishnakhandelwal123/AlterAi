@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Copy, ExternalLink, Mic2, RotateCcw, ShieldCheck, Sparkles, Volume2 } from 'lucide-react';
 import { useChat } from '../hooks/useChat';
+import { voiceApi } from '../api/voiceApi.js';
 import PersonalityHeader from '../components/chat/PersonalityHeader';
 import MessageBubble from '../components/chat/MessageBubble';
 import StarterQuestions from '../components/chat/StarterQuestions';
@@ -14,9 +15,73 @@ const getInitials = (name = '') => {
   return (name[0] || 'A').toUpperCase();
 };
 
+const getVoicePrefKey = (slug) => `alter_voice_on_${slug}`;
+
 const ChatPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get('embed') === 'true';
+  const isWidget = searchParams.get('widget') === 'true';
+  const embedTheme = searchParams.get('theme') === 'light' ? 'light' : 'dark';
+  const [voiceOn, setVoiceOn] = useState(() => localStorage.getItem(getVoicePrefKey(slug)) === 'true');
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const isPlayingRef = useRef(false);
+  const personalityRef = useRef(null);
+  const voiceOnRef = useRef(voiceOn);
+
+  useEffect(() => {
+    personalityRef.current = null;
+  }, [slug]);
+
+  useEffect(() => {
+    voiceOnRef.current = voiceOn;
+  }, [voiceOn]);
+
+  const playVoiceResponse = useCallback(async (text, personality) => {
+    if (!voiceOnRef.current || !personality?.voice_enabled) return;
+    if (isPlayingRef.current) return;
+    if (!text || text.length > 500) return;
+
+    isPlayingRef.current = true;
+    setIsPlayingAudio(true);
+
+    try {
+      const blob = await voiceApi.speak(text, personality.id);
+      if (!blob) {
+        isPlayingRef.current = false;
+        setIsPlayingAudio(false);
+        return;
+      }
+
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        isPlayingRef.current = false;
+        setIsPlayingAudio(false);
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        isPlayingRef.current = false;
+        setIsPlayingAudio(false);
+      };
+
+      await audio.play();
+    } catch {
+      isPlayingRef.current = false;
+      setIsPlayingAudio(false);
+    }
+  }, []);
+
+  const onAssistantDone = useCallback((text) => {
+    const current = personalityRef.current;
+    if (current?.voice_enabled) {
+      playVoiceResponse(text, current);
+    }
+  }, [playVoiceResponse]);
 
   const {
     personality,
@@ -32,7 +97,23 @@ const ChatPage = () => {
     messagesEndRef,
     sendMessage,
     clearChat
-  } = useChat(slug);
+  } = useChat(slug, { onAssistantDone });
+
+  useEffect(() => {
+    personalityRef.current = personality;
+  }, [personality]);
+
+  useEffect(() => {
+    if (!slug) return;
+    setVoiceOn(localStorage.getItem(getVoicePrefKey(slug)) === 'true');
+  }, [slug]);
+
+  const handleVoiceToggle = (next) => {
+    setVoiceOn(next);
+    if (slug) {
+      localStorage.setItem(getVoicePrefKey(slug), String(next));
+    }
+  };
 
   useEffect(() => {
     if (!personality) return;
@@ -119,27 +200,39 @@ const ChatPage = () => {
   const visibleMessages = messages.filter((m) => !m.isWelcome || !hasStarted);
 
   return (
-    <div className="chat-experience">
-      <header className="chat-brand-bar">
-        <Link to="/" className="chat-logo">ALTER</Link>
-        <div className="chat-bar-actions">
-          <button type="button" onClick={clearChat} className="clear-chat-button" aria-label="Clear chat and start fresh">
-            <RotateCcw className="h-4 w-4" />
-            <span>Clear</span>
-          </button>
-          <button type="button" onClick={copyCurrentLink} className="icon-action" aria-label="Copy chat link">
-            <Copy className="h-4 w-4" />
-          </button>
-          <button type="button" className="icon-action" aria-label="Voice mode preview" disabled>
-            <Volume2 className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => navigate('/auth')} className="create-link">
-            Create your own
-          </button>
-        </div>
-      </header>
+    <div
+      className={`chat-experience${isEmbed ? ' is-embed' : ''}${isWidget ? ' is-widget' : ''}${embedTheme === 'light' ? ' is-light' : ''}`}
+    >
+      {!isEmbed && (
+        <header className="chat-brand-bar">
+          <Link to="/" className="chat-logo">ALTER</Link>
+          <div className="chat-bar-actions">
+            <button type="button" onClick={clearChat} className="clear-chat-button" aria-label="Clear chat and start fresh">
+              <RotateCcw className="h-4 w-4" />
+              <span>Clear</span>
+            </button>
+            <button type="button" onClick={copyCurrentLink} className="icon-action" aria-label="Copy chat link">
+              <Copy className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVoiceToggle(!voiceOn)}
+              className="icon-action"
+              aria-label={voiceOn ? 'Mute voice responses' : 'Enable voice responses'}
+              disabled={!personality?.voice_enabled}
+              title={personality?.voice_enabled ? (voiceOn ? 'Voice on' : 'Voice off') : 'Voice not enabled for this clone'}
+            >
+              <Volume2 className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={() => navigate('/auth')} className="create-link">
+              Create your own
+            </button>
+          </div>
+        </header>
+      )}
 
       <main className="chat-stage">
+        {!isEmbed && (
         <aside className="persona-rail">
           <div className="persona-mark" style={{ background: avatarColor, boxShadow: `0 0 34px ${avatarColor}66` }}>
             {ownerAvatar ? <img src={ownerAvatar} alt="" /> : getInitials(personality?.name)}
@@ -151,9 +244,14 @@ const ChatPage = () => {
           </p>
 
           <div className="persona-actions">
-            <button type="button" disabled>
+            <button
+              type="button"
+              disabled={!personality?.voice_enabled}
+              onClick={() => personality?.voice_enabled && handleVoiceToggle(!voiceOn)}
+              title={personality?.voice_enabled ? (voiceOn ? 'Voice on' : 'Voice off') : 'Voice not enabled'}
+            >
               <Mic2 className="h-4 w-4" />
-              Voice soon
+              {personality?.voice_enabled ? (voiceOn ? 'Voice on' : 'Voice off') : 'Voice off'}
             </button>
             <a href={window.location.href} target="_blank" rel="noreferrer">
               <ExternalLink className="h-4 w-4" />
@@ -180,6 +278,7 @@ const ChatPage = () => {
             </div>
           )}
         </aside>
+        )}
 
         <section className="conversation-shell">
           <div className="conversation-top">
@@ -189,7 +288,11 @@ const ChatPage = () => {
                 <span />
               </div>
             ) : (
-              <PersonalityHeader personality={personality} />
+              <PersonalityHeader
+                personality={personality}
+                voiceOn={voiceOn}
+                onVoiceToggle={handleVoiceToggle}
+              />
             )}
           </div>
 
@@ -209,6 +312,23 @@ const ChatPage = () => {
               {visibleMessages.map((m) => (
                 <MessageBubble key={m.id} message={m} personality={personality} />
               ))}
+
+              {isPlayingAudio && (
+                <div className="flex items-center gap-2 mt-2 ml-10">
+                  <div className="flex gap-1 items-end">
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-[rgba(0,212,255,0.6)] rounded-full voice-speaking-bar"
+                        style={{ height: `${8 + i * 4}px`, animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: 'rgba(0,212,255,0.5)' }}>
+                    Speaking...
+                  </span>
+                </div>
+              )}
 
               <div ref={messagesEndRef} />
             </div>
@@ -407,9 +527,20 @@ const ChatPage = () => {
           text-decoration: none;
           font: 11px 'DM Mono', monospace;
         }
-        .persona-actions button {
+        .persona-actions button:not(:disabled) {
+          cursor: pointer;
+          opacity: 1;
+        }
+        .persona-actions button:disabled {
           cursor: not-allowed;
           opacity: 0.58;
+        }
+        .voice-speaking-bar {
+          animation: voiceBarPulse 0.8s ease-in-out infinite;
+        }
+        @keyframes voiceBarPulse {
+          0%, 100% { transform: scaleY(0.6); opacity: 0.6; }
+          50% { transform: scaleY(1); opacity: 1; }
         }
         .persona-proof {
           display: grid;
@@ -504,6 +635,37 @@ const ChatPage = () => {
           max-width: 500px;
           color: rgba(255,255,255,0.48);
           font: 14px/1.7 Inter, system-ui, sans-serif;
+        }
+        .chat-experience.is-embed {
+          min-height: 100%;
+          height: 100%;
+        }
+        .chat-experience.is-embed::before {
+          display: none;
+        }
+        .chat-experience.is-embed .chat-stage {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 0;
+          gap: 0;
+        }
+        .chat-experience.is-embed .conversation-shell {
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          background: #080808;
+        }
+        .chat-experience.is-widget .conversation-top {
+          padding-top: 8px;
+        }
+        .chat-experience.is-widget .message-scroll {
+          padding-top: 12px;
+        }
+        .chat-experience.is-light {
+          background: #f7f5ff;
+          color: #0f172a;
+        }
+        .chat-experience.is-light .conversation-shell {
+          background: #fff;
         }
         @media (max-width: 980px) {
           .chat-stage {

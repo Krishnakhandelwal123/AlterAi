@@ -1,15 +1,9 @@
 import path from 'path';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { ValidationError } from '../middleware/errorHandler.js';
+import { sanitizeNotificationPrefs } from '../config/notificationPrefs.js';
 
 const AVATAR_BUCKET = 'avatars';
-
-const defaultNotifications = {
-  newConversation: true,
-  dailySummary: true,
-  weeklyAnalytics: false,
-  productUpdates: true
-};
 
 const mapProfile = (profile, user) => ({
   id: profile?.id || user.id,
@@ -19,10 +13,7 @@ const mapProfile = (profile, user) => ({
   bio: profile?.bio || '',
   website: profile?.website || '',
   location: profile?.location || '',
-  notifications: {
-    ...defaultNotifications,
-    ...(profile?.notifications || {})
-  },
+  notifications: sanitizeNotificationPrefs(profile?.notifications),
   createdAt: profile?.created_at || user.created_at
 });
 
@@ -40,20 +31,6 @@ const normalizeWebsite = (value) => {
   } catch {
     throw new ValidationError('Website must be a valid URL');
   }
-};
-
-const sanitizeNotifications = (notifications) => {
-  if (!notifications || typeof notifications !== 'object' || Array.isArray(notifications)) {
-    return defaultNotifications;
-  }
-
-  return Object.keys(defaultNotifications).reduce((acc, key) => {
-    acc[key] =
-      typeof notifications[key] === 'boolean'
-        ? notifications[key]
-        : defaultNotifications[key];
-    return acc;
-  }, {});
 };
 
 const getProfileRow = async (userId) => {
@@ -135,7 +112,7 @@ export const updateProfile = async (req, res, next) => {
     }
 
     if (notifications !== undefined) {
-      updates.notifications = sanitizeNotifications(notifications);
+      updates.notifications = sanitizeNotificationPrefs(notifications);
     }
 
     const profile = await saveProfile(req.user, updates);

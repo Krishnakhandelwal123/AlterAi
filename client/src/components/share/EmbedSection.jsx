@@ -25,12 +25,15 @@ const EmbedSection = ({ data, onTrack }) => {
   const [openMode, setOpenMode] = useState('New Tab');
   const [copied, setCopied] = useState('');
   const plan = data.plan || 'free';
-  const locked = plan === 'free';
+  const locked = plan !== 'creator';
 
   const code = useMemo(() => {
     const radius = radiusMap[corners];
     if (tab === 'script') {
-      return `<!-- Alter AI Widget -->\n<script\n  src="${new URL(data.shareUrl).origin}/widget.js"\n  data-slug="${data.clone.slug}"\n  data-theme="${theme}"\n  data-position="bottom-right"\n  data-color="${data.clone.avatar_color || '#00D4FF'}"\n  async>\n</script>`;
+      const origin = new URL(data.shareUrl).origin;
+      const color = data.clone.avatar_color || '#00D4FF';
+      const name = data.clone.name || 'AI';
+      return `<!-- Alter AI floating widget -->\n<script\n  src="${origin}/widget.js"\n  data-slug="${data.clone.slug}"\n  data-theme="${theme}"\n  data-position="bottom-right"\n  data-color="${color}"\n  data-label="Chat with ${name}"\n  async>\n</script>`;
     }
     if (tab === 'button') {
       return `<a href="${data.shareUrl}"\n   target="${openMode === 'New Tab' ? '_blank' : '_self'}"\n   style="background:${data.clone.avatar_color || '#00D4FF'};\n          color:white;\n          padding:12px 24px;\n          border-radius:10px;\n          text-decoration:none;\n          font-family:sans-serif;">\n  ${buttonText}\n</a>`;

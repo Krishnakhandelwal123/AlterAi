@@ -18,49 +18,53 @@ import EmbedWidget from './pages/dashboard/EmbedWidget';
 import Billing from './pages/dashboard/Billing';
 import Settings from './pages/dashboard/Settings';
 import Help from './pages/dashboard/Help';
-import DashboardPlaceholder from './pages/dashboard/DashboardPlaceholder';
+
+const dashboardRoutes = (
+  <Route
+    path="/dashboard"
+    element={
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    }
+  >
+    <Route index element={<DashboardHome />} />
+    <Route path="clones" element={<MyClones />} />
+    <Route path="create" element={<CreateClone />} />
+    <Route path="analytics" element={<Analytics />} />
+    <Route path="voice" element={<VoiceClone />} />
+    <Route path="voice/:cloneId" element={<VoiceClone />} />
+    <Route path="training" element={<TrainingData />} />
+    <Route path="share" element={<SharePage />} />
+    <Route path="share/:cloneId" element={<SharePage />} />
+    <Route path="embed" element={<EmbedWidget />} />
+    <Route path="billing" element={<Billing />} />
+    <Route path="settings" element={<Settings />} />
+    <Route path="help" element={<Help />} />
+  </Route>
+);
+
+const marketingRoutes = (
+  <>
+    <Route path="/" element={<Home />} />
+    <Route path="/auth" element={<Auth />} />
+    <Route path="/auth/callback" element={<AuthCallback />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </>
+);
 
 const App = () => (
   <Routes>
-    {/* Chat page — standalone, no Locomotive scroll */}
     <Route path="/chat/:slug" element={<ChatPage />} />
-
-    {/* All other routes wrapped in LocomotiveRoot */}
-    <Route path="*" element={
-      <LocomotiveRoot>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<DashboardHome />} />
-            <Route path="clones" element={<MyClones />} />
-            <Route path="create" element={<CreateClone />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="voice" element={<VoiceClone />} />
-            <Route path="training" element={<TrainingData />} />
-            <Route path="share" element={<SharePage />} />
-            <Route path="share/:cloneId" element={<SharePage />} />
-            <Route path="embed" element={<EmbedWidget />} />
-            <Route path="billing" element={<Billing />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="help" element={<Help />} />
-            <Route path="activity" element={<DashboardPlaceholder title="Activity" />} />
-            <Route path="integrations" element={<DashboardPlaceholder title="Integrations" />} />
-            <Route path="models" element={<DashboardPlaceholder title="Models" />} />
-            <Route path="security" element={<DashboardPlaceholder title="API & security" />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </LocomotiveRoot>
-    } />
+    {dashboardRoutes}
+    <Route
+      path="*"
+      element={
+        <LocomotiveRoot>
+          <Routes>{marketingRoutes}</Routes>
+        </LocomotiveRoot>
+      }
+    />
   </Routes>
 );
 

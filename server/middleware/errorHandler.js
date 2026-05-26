@@ -23,6 +23,11 @@ export const errorHandler = (error, req, res, _next) => {
   const isDev = process.env.NODE_ENV !== 'production';
 
   let status = Number(error.statusCode || error.status || 500);
+  if (error.type === 'entity.parse.failed' || /parsing the body/i.test(error.message || '')) {
+    status = 400;
+    error.message =
+      'Upload could not be read. Refresh the page and try again. If this persists, restart the API server.';
+  }
   if (error.name === 'ValidationError') status = 400;
   if (error.name === 'AuthError') status = 401;
   if (error.name === 'NotFoundError') status = 404;

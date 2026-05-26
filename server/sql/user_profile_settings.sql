@@ -3,9 +3,17 @@ alter table if exists public.users
   add column if not exists website text default '',
   add column if not exists location text default '',
   add column if not exists notifications jsonb default '{
+    "inAppAlerts": true,
+    "emailAlerts": true,
     "newConversation": true,
-    "dailySummary": true,
+    "chatActivity": false,
+    "trainingUpdates": true,
+    "clonePublished": true,
+    "billingAlerts": true,
+    "planLimitAlerts": true,
+    "voiceUpdates": true,
     "weeklyAnalytics": false,
+    "dailySummary": true,
     "productUpdates": true
   }'::jsonb;
 

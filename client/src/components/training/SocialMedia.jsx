@@ -53,6 +53,44 @@ const IconNotion = () => (
   </svg>
 );
 
+const CARD_HINTS = {
+  github: {
+    handle: 'GitHub username (optional if token is yours)',
+    token: 'Classic (ghp_) or fine-grained (github_pat_) token',
+    note: 'Fine-grained: enable Contents + Metadata (read) on repos to import. Sync pulls profile, descriptions, and READMEs.'
+  },
+  reddit: {
+    handle: 'Reddit username',
+    token: 'Optional — public posts only',
+    note: 'Sync imports your public submitted posts (no token required).'
+  },
+  notion: {
+    handle: 'Workspace label (optional)',
+    token: 'Notion internal integration secret',
+    note: 'Sync imports pages shared with your integration.'
+  },
+  medium: {
+    handle: 'Medium @username',
+    token: 'Optional',
+    note: 'Sync imports articles from your Medium RSS feed.'
+  },
+  twitter: {
+    handle: 'X @username',
+    token: 'X API bearer or user access token',
+    note: 'Requires X developer API access with tweet read scope.'
+  },
+  linkedin: {
+    handle: 'LinkedIn username',
+    token: 'Not supported yet',
+    note: 'Use Upload or Paste Text for LinkedIn content until API import ships.'
+  },
+  instagram: {
+    handle: 'Instagram username',
+    token: 'Not supported yet',
+    note: 'Use Upload or Paste Text for captions until Meta API import ships.'
+  }
+};
+
 const CARD_META = [
   { id: 'twitter', label: 'Twitter / X', badge: 'Creator' },
   { id: 'reddit', label: 'Reddit', badge: 'Free' },
@@ -133,7 +171,7 @@ const SocialMedia = ({ connections = [], onConnect, onDisconnect, onSync, busy =
                   </span>
                 </div>
                 <p className="mt-3 text-[9px] text-white/45" style={{ fontFamily: "'DM Mono', monospace" }}>
-                  Imported: {(connection.post_count || 0).toLocaleString()} · Last sync:{' '}
+                  Imported: {(connection.post_count || 0).toLocaleString()} items · Last sync:{' '}
                   {connection.last_synced ? new Date(connection.last_synced).toLocaleString() : 'Never'}
                 </p>
                 <div className="mt-4 flex gap-2">
@@ -160,7 +198,8 @@ const SocialMedia = ({ connections = [], onConnect, onDisconnect, onSync, busy =
             ) : (
               <>
                 <p className="mt-2 text-[12px] leading-relaxed text-white/35" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  Connect {platform.label} to import your content and strengthen your clone voice.
+                  {CARD_HINTS[platform.id]?.note ||
+                    `Connect ${platform.label} to import your content and strengthen your clone voice.`}
                 </p>
                 <input
                   value={formState[platform.id]?.handle || ''}
@@ -169,16 +208,19 @@ const SocialMedia = ({ connections = [], onConnect, onDisconnect, onSync, busy =
                   }
                   className="mt-3 h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 text-[11px] text-white"
                   style={{ fontFamily: "'DM Mono', monospace" }}
-                  placeholder={`${platform.id} handle`}
+                  placeholder={CARD_HINTS[platform.id]?.handle || `${platform.id} handle`}
+                  autoComplete="username"
                 />
                 <input
+                  type="password"
                   value={formState[platform.id]?.accessToken || ''}
                   onChange={(e) =>
                     setFormState((prev) => ({ ...prev, [platform.id]: { ...prev[platform.id], accessToken: e.target.value } }))
                   }
                   className="mt-2 h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 text-[11px] text-white"
                   style={{ fontFamily: "'DM Mono', monospace" }}
-                  placeholder="Access token"
+                  placeholder={CARD_HINTS[platform.id]?.token || 'Access token'}
+                  autoComplete="off"
                 />
                 <button
                   type="button"

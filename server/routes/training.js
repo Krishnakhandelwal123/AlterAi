@@ -11,6 +11,7 @@ import { calculateTrainingStrength, checkLimit, getUserPlan, getUserUsage } from
 import { getPlanLimits } from '../config/planLimits.js';
 import { decrypt, encrypt } from '../utils/encrypt.js';
 import { supabase } from '../lib/supabase.js';
+import { importFromSocialPlatform, SocialImportError } from '../services/socialImport/index.js';
 
 const router = Router();
 const rssParser = new Parser();
@@ -47,8 +48,14 @@ const sanitizeDbError = (error, fallback = 'Something went wrong') => {
   const message = (error?.message || '').toLowerCase();
   const code = error?.code;
 
+  if (code === '22P05' || message.includes('unsupported unicode escape') || message.includes('\\u0000')) {
+    return 'Imported text contained invalid characters and was rejected by the database. Sync again after the latest server update.';
+  }
+  if (message.includes('social_connections')) {
+    return 'Run server/sql/social_connections.sql in the Supabase SQL Editor, then reconnect.';
+  }
   if (code === 'PGRST205' || (message.includes('relation') && message.includes('does not exist'))) {
-    return 'Database tables are missing. Please run the SQL setup script in your Supabase SQL Editor.';
+    return 'Database tables are missing. Please run the SQL setup scripts in server/sql/ via the Supabase SQL Editor.';
   }
   if (message.includes('bucket not found')) {
     return 'Storage bucket "training-files" not found. Please create it in your Supabase Storage dashboard.';
@@ -95,6 +102,21 @@ const processTrainingAsync = async ({ userId, personalityId, content, sourceType
   } catch (error) {
     logDev(error);
   }
+};
+
+const removePriorSocialTraining = async (userId, personalityId, sourceType) => {
+  const { data: rows } = await supabase
+    .from('training_data')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('personality_id', personalityId)
+    .eq('source_type', sourceType);
+
+  if (!rows?.length) return;
+
+  const ids = rows.map((row) => row.id);
+  await supabase.from('personality_embeddings').delete().in('training_data_id', ids).eq('user_id', userId);
+  await supabase.from('training_data').delete().in('id', ids).eq('user_id', userId);
 };
 const SOCIAL_PLATFORMS = ['twitter', 'reddit', 'github', 'linkedin', 'notion', 'instagram', 'medium'];
 const sourceTypeLabelMap = {
@@ -272,12 +294,18 @@ router.post('/social/connect', rules.socialConnect, validate, async (req, res) =
       });
     }
 
+    const tokenOptional = ['reddit', 'medium'].includes(normalizedPlatform);
+    const rawToken = String(accessToken || '').trim() || (tokenOptional ? 'public-only' : '');
+    if (!tokenOptional && rawToken.length < 8) {
+      return res.status(400).json({ success: false, error: 'Access token must be at least 8 characters' });
+    }
+
     const { error } = await supabase.from('social_connections').upsert(
       {
         user_id: userId,
         platform: normalizedPlatform,
         handle: handle || '',
-        access_token: encrypt(accessToken),
+        access_token: encrypt(rawToken),
         refresh_token: refreshToken ? encrypt(refreshToken) : null,
         token_expires: null
       },
@@ -292,7 +320,7 @@ router.post('/social/connect', rules.socialConnect, validate, async (req, res) =
     });
   } catch (error) {
     logDev(error);
-    return res.status(500).json(sanitizeError());
+    return res.status(500).json(sanitizeDbError(error, 'Failed to connect social account'));
   }
 });
 
@@ -326,17 +354,36 @@ router.post('/social/sync/:platform', rules.socialSync, validate, async (req, re
     }
 
     const decryptedToken = decrypt(connection.access_token);
-    if (!decryptedToken) {
+    const needsToken = !['reddit', 'medium'].includes(platform);
+    if (needsToken && !decryptedToken) {
       return res.status(400).json({ success: false, error: 'Stored token is invalid. Reconnect this platform.' });
     }
 
-    const simulatedPieces = Math.max(5, Math.min(250, (connection.post_count || 0) + 25));
-    const trainingContent = [
-      `Platform: ${platform}`,
-      `Handle: ${connection.handle || ''}`,
-      `Imported pieces: ${simulatedPieces}`,
-      'This dataset includes writing style, sentence cadence, recurring phrases, and topical patterns.'
-    ].join('\n');
+    let imported;
+    try {
+      imported = await importFromSocialPlatform(platform, {
+        accessToken: decryptedToken,
+        handle: connection.handle || ''
+      });
+    } catch (importError) {
+      if (importError instanceof SocialImportError) {
+        return res.status(importError.status || 400).json({
+          success: false,
+          error: importError.message
+        });
+      }
+      throw importError;
+    }
+
+    const trainingContent = imported.content?.trim() || '';
+    if (trainingContent.length < 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Imported content was too short to train on. Check handle/token permissions.'
+      });
+    }
+
+    await removePriorSocialTraining(userId, personalityId, platform);
 
     const { data: trainingRow, error: insertError } = await supabase
       .from('training_data')
@@ -346,16 +393,19 @@ router.post('/social/sync/:platform', rules.socialSync, validate, async (req, re
         source_type: platform,
         content: trainingContent,
         char_count: trainingContent.length,
+        file_name: `${platform} import`,
         status: 'processing'
       })
       .select('id')
       .single();
     if (insertError) throw insertError;
 
+    const pieceCount = imported.pieceCount || 0;
+
     await supabase
       .from('social_connections')
       .update({
-        post_count: simulatedPieces,
+        post_count: pieceCount,
         last_synced: new Date().toISOString()
       })
       .eq('user_id', userId)
@@ -363,8 +413,13 @@ router.post('/social/sync/:platform', rules.socialSync, validate, async (req, re
 
     res.json({
       success: true,
-      data: { trainingDataId: trainingRow.id, platform, imported: simulatedPieces },
-      message: `${platform} sync started`
+      data: {
+        trainingDataId: trainingRow.id,
+        platform,
+        imported: pieceCount,
+        charCount: trainingContent.length
+      },
+      message: `Imported ${pieceCount} items from ${platform}. Training started.`
     });
 
     void processTrainingAsync({
@@ -376,7 +431,7 @@ router.post('/social/sync/:platform', rules.socialSync, validate, async (req, re
     });
   } catch (error) {
     logDev(error);
-    return res.status(500).json(sanitizeError());
+    return res.status(500).json(sanitizeDbError(error, 'Failed to sync social account'));
   }
 });
 
@@ -395,7 +450,7 @@ router.delete('/social/:platform', rules.socialPlatform, validate, async (req, r
     });
   } catch (error) {
     logDev(error);
-    return res.status(500).json(sanitizeError());
+    return res.status(500).json(sanitizeDbError(error, 'Failed to disconnect social account'));
   }
 });
 

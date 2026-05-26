@@ -1,21 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ImagePlus, Loader2, Mail, MapPin, Save, Shield, User, X } from 'lucide-react';
+import { Bell, Check, ImagePlus, Loader2, Mail, MapPin, Save, Shield, User, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
-
-const notificationLabels = [
-  ['newConversation', 'New conversation alerts'],
-  ['dailySummary', 'Daily summary email'],
-  ['weeklyAnalytics', 'Weekly analytics report'],
-  ['productUpdates', 'Product updates']
-];
-
-const defaultNotifications = {
-  newConversation: true,
-  dailySummary: true,
-  weeklyAnalytics: false,
-  productUpdates: true
-};
+import {
+  DEFAULT_NOTIFICATION_PREFS,
+  EMAIL_NOTIFICATION_GROUPS,
+  IN_APP_NOTIFICATION_GROUPS
+} from '../../constants/notificationPrefs.js';
 
 const Settings = () => {
   const { user, updateProfile, uploadAvatar } = useAuth();
@@ -29,7 +20,7 @@ const Settings = () => {
     bio: '',
     website: '',
     location: '',
-    notifications: defaultNotifications
+    notifications: { ...DEFAULT_NOTIFICATION_PREFS }
   });
 
   useEffect(() => {
@@ -40,7 +31,7 @@ const Settings = () => {
       website: user.website || '',
       location: user.location || '',
       notifications: {
-        ...defaultNotifications,
+        ...DEFAULT_NOTIFICATION_PREFS,
         ...(user.notifications || {})
       }
     });
@@ -56,7 +47,8 @@ const Settings = () => {
       form.bio !== (user.bio || '') ||
       form.website !== (user.website || '') ||
       form.location !== (user.location || '') ||
-      JSON.stringify(form.notifications) !== JSON.stringify({ ...defaultNotifications, ...(user.notifications || {}) })
+      JSON.stringify(form.notifications) !==
+        JSON.stringify({ ...DEFAULT_NOTIFICATION_PREFS, ...(user.notifications || {}) })
     );
   }, [form, user]);
 
@@ -121,7 +113,7 @@ const Settings = () => {
 
   const tabs = [
     { label: 'Profile', icon: User },
-    { label: 'Notifications', icon: Mail },
+    { label: 'Notifications', icon: Bell },
     { label: 'Security', icon: Shield }
   ];
 
@@ -218,7 +210,7 @@ const Settings = () => {
               <div className="settings-card-head">
                 <div>
                   <p>Notifications</p>
-                  <h2>Email preferences</h2>
+                  <h2>Alerts & email</h2>
                 </div>
                 <button type="button" onClick={save} disabled={!isDirty || saving}>
                   {saving ? <Loader2 className="settings-spin" size={14} /> : <Save size={14} />}
@@ -226,16 +218,63 @@ const Settings = () => {
                 </button>
               </div>
 
-              <div className="settings-toggle-list">
-                {notificationLabels.map(([key, label]) => (
-                  <button key={key} type="button" className="settings-toggle" onClick={() => setNotification(key)}>
-                    <span>{label}</span>
-                    <i className={form.notifications[key] ? 'is-on' : ''}>
-                      {form.notifications[key] ? <Check size={13} /> : <X size={13} />}
-                    </i>
-                  </button>
-                ))}
-              </div>
+              <p className="settings-help is-block" style={{ marginTop: 0, marginBottom: 8 }}>
+                Control what appears in the dashboard bell and which emails Alter AI may send when SMTP is configured.
+              </p>
+
+              {IN_APP_NOTIFICATION_GROUPS.map((group) => (
+                <div key={group.title} className="settings-notif-group">
+                  <h3>{group.title}</h3>
+                  {group.description ? <p>{group.description}</p> : null}
+                  <div className="settings-toggle-list">
+                    {group.items.map(([key, label, description]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className="settings-toggle"
+                        onClick={() => setNotification(key)}
+                      >
+                        <span>
+                          {label}
+                          {description ? <em className="settings-toggle-desc">{description}</em> : null}
+                        </span>
+                        <i className={form.notifications[key] ? 'is-on' : ''}>
+                          {form.notifications[key] ? <Check size={13} /> : <X size={13} />}
+                        </i>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {EMAIL_NOTIFICATION_GROUPS.map((group) => (
+                <div key={group.title} className="settings-notif-group">
+                  <h3>
+                    <Mail size={13} style={{ display: 'inline', marginRight: 6, verticalAlign: -2 }} />
+                    {group.title}
+                  </h3>
+                  {group.description ? <p>{group.description}</p> : null}
+                  <div className="settings-toggle-list">
+                    {group.items.map(([key, label, description]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className="settings-toggle"
+                        onClick={() => setNotification(key)}
+                        disabled={!form.notifications.emailAlerts && key !== 'emailAlerts'}
+                      >
+                        <span>
+                          {label}
+                          {description ? <em className="settings-toggle-desc">{description}</em> : null}
+                        </span>
+                        <i className={form.notifications[key] ? 'is-on' : ''}>
+                          {form.notifications[key] ? <Check size={13} /> : <X size={13} />}
+                        </i>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </section>
           )}
 
@@ -593,6 +632,12 @@ const SettingsStyles = () => (
       color: rgba(255,255,255,0.68);
       font-size: 11px;
       text-align: left;
+      cursor: pointer;
+    }
+
+    .settings-toggle:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
     }
 
     .settings-toggle i {

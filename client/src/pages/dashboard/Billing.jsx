@@ -3,15 +3,14 @@ import { billingApi } from '../../api/billingApi.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import { BILLING_SUBSCRIPTION_UPDATED, useBillingSubscription } from '../../hooks/useBillingSubscription.js';
 
+const PLAN_RANK = { free: 0, pro: 1, creator: 2 };
+
 const plans = [
   {
     id: 'free',
     name: 'Free',
     price: 'INR 0',
     desc: 'A focused sandbox for testing one clone.',
-    featured: false,
-    cta: 'Current plan',
-    disabled: true,
     border: 'border-white/[0.08]'
   },
   {
@@ -20,9 +19,6 @@ const plans = [
     price: 'INR 1,599',
     period: '/mo',
     desc: 'For creators sharing a few public clones.',
-    featured: true,
-    cta: 'Upgrade to Pro',
-    disabled: false,
     border: 'border-[rgba(0,212,255,0.35)] shadow-[0_0_24px_rgba(0,212,255,0.08)]'
   },
   {
@@ -31,12 +27,26 @@ const plans = [
     price: 'INR 3,999',
     period: '/mo',
     desc: 'For higher traffic and richer training.',
-    featured: false,
-    cta: 'Upgrade to Creator',
-    disabled: false,
     border: 'border-[rgba(124,58,237,0.35)]'
   }
 ];
+
+const getPlanButtonState = (planId, currentPlan) => {
+  const currentRank = PLAN_RANK[currentPlan] ?? 0;
+  const targetRank = PLAN_RANK[planId] ?? 0;
+
+  if (targetRank === currentRank) {
+    return { label: 'Current plan', disabled: true, canUpgrade: false };
+  }
+  if (targetRank < currentRank) {
+    return { label: 'Included in your plan', disabled: true, canUpgrade: false };
+  }
+  return {
+    label: planId === 'pro' ? 'Upgrade to Pro' : 'Upgrade to Creator',
+    disabled: false,
+    canUpgrade: true
+  };
+};
 
 const comparison = [
   ['Active clones', '1', '5', '50'],
@@ -86,6 +96,9 @@ const Billing = () => {
   const [error, setError] = useState('');
 
   const handleUpgrade = async (planId) => {
+    const { canUpgrade } = getPlanButtonState(planId, currentPlan);
+    if (!canUpgrade) return;
+
     setBusyPlan(planId);
     setNotice('');
     setError('');
@@ -178,16 +191,25 @@ const Billing = () => {
         <div className="grid gap-6 md:grid-cols-3">
           {plans.map((p) => {
             const isCurrent = currentPlan === p.id;
-            const disabled = p.disabled || isCurrent || busyPlan;
+            const buttonState = getPlanButtonState(p.id, currentPlan);
+            const disabled = buttonState.disabled || Boolean(busyPlan);
+            const showPopular = p.id === 'pro' && currentPlan === 'free';
 
             return (
               <div
                 key={p.name}
-                className={`relative flex min-h-[390px] flex-col rounded-2xl border bg-[#0D0D0D] p-7 ${p.border}`}
+                className={`relative flex min-h-[390px] flex-col rounded-2xl border bg-[#0D0D0D] p-7 ${
+                  isCurrent ? 'border-[rgba(0,212,255,0.45)] ring-1 ring-[rgba(0,212,255,0.15)]' : p.border
+                }`}
               >
-                {p.featured ? (
+                {showPopular ? (
                   <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full border border-[rgba(0,212,255,0.35)] bg-[#080808] px-3 py-0.5 text-[8px] uppercase tracking-widest text-[rgba(0,212,255,0.88)]" style={{ fontFamily: "'DM Mono', monospace" }}>
                     Most popular
+                  </span>
+                ) : null}
+                {isCurrent ? (
+                  <span className="absolute -top-2.5 right-4 rounded-full border border-[rgba(5,150,105,0.35)] bg-[#080808] px-3 py-0.5 text-[8px] uppercase tracking-widest text-[#059669]" style={{ fontFamily: "'DM Mono', monospace" }}>
+                    Active
                   </span>
                 ) : null}
                 <h3 className="text-[18px] italic font-light text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
@@ -219,7 +241,7 @@ const Billing = () => {
                   }`}
                   style={{ fontFamily: "'DM Mono', monospace" }}
                 >
-                  {busyPlan === p.id ? 'Opening checkout...' : isCurrent ? 'Current plan' : p.cta}
+                  {busyPlan === p.id ? 'Opening checkout...' : buttonState.label}
                 </button>
               </div>
             );

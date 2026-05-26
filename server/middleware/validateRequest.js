@@ -44,14 +44,30 @@ export const rules = {
     body('username').isString().matches(/^[@]?[a-zA-Z0-9_-]+$/).withMessage('Invalid Medium username')
   ],
   socialConnect: [
-    body('personalityId').isUUID().withMessage('Invalid personality ID'),
+    body('personalityId').isUUID().withMessage('Select a clone first (invalid personality ID)'),
     body('platform')
       .isString()
       .matches(/^(twitter|reddit|github|linkedin|notion|instagram|medium)$/)
       .withMessage('Invalid platform'),
-    body('handle').optional().isString().isLength({ min: 1, max: 120 }).withMessage('Invalid handle'),
-    body('accessToken').isString().isLength({ min: 8, max: 5000 }).withMessage('Invalid access token'),
-    body('refreshToken').optional().isString().isLength({ max: 5000 }).withMessage('Invalid refresh token')
+    body('handle')
+      .optional({ values: 'falsy' })
+      .trim()
+      .isString()
+      .isLength({ max: 120 })
+      .withMessage('Handle must be 120 characters or fewer'),
+    body('accessToken')
+      .optional({ values: 'falsy' })
+      .trim()
+      .custom((value, { req }) => {
+        const platform = String(req.body?.platform || '').toLowerCase();
+        if (['reddit', 'medium'].includes(platform)) return true;
+        const token = String(value || '').trim();
+        if (token.length < 8) {
+          throw new Error('Access token must be at least 8 characters');
+        }
+        return true;
+      }),
+    body('refreshToken').optional({ values: 'falsy' }).isString().isLength({ max: 5000 }).withMessage('Invalid refresh token')
   ],
   socialSync: [
     body('personalityId').isUUID().withMessage('Invalid personality ID'),

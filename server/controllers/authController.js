@@ -1,7 +1,12 @@
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { AuthError } from '../middleware/errorHandler.js';
 import { parseVerifyTokenBody } from '../schemas/authSchemas.js';
+import {
+  DEFAULT_NOTIFICATION_PREFS,
+  sanitizeNotificationPrefs
+} from '../config/notificationPrefs.js';
 import { safeSendEmail, sendWelcomeEmail } from '../services/emailService.js';
+import { notifyWelcome, shouldSendUserEmail } from '../services/notificationService.js';
 
 const mapProfile = (profile, user) => ({
   id: profile?.id || user.id,
@@ -11,12 +16,7 @@ const mapProfile = (profile, user) => ({
   bio: profile?.bio || '',
   website: profile?.website || '',
   location: profile?.location || '',
-  notifications: profile?.notifications || {
-    newConversation: true,
-    dailySummary: true,
-    weeklyAnalytics: false,
-    productUpdates: true
-  },
+  notifications: sanitizeNotificationPrefs(profile?.notifications),
   createdAt: profile?.created_at || user.created_at
 });
 
@@ -44,15 +44,23 @@ export const verifyToken = async (req, res, next) => {
 
     if (!existing) {
       isNewUser = true;
-      const { data: created } = await supabaseAdmin.from('users').insert(payload).select('*').single();
+      const { data: created } = await supabaseAdmin
+        .from('users')
+        .insert({ ...payload, notifications: { ...DEFAULT_NOTIFICATION_PREFS } })
+        .select('*')
+        .single();
       profile = created;
-      void safeSendEmail(
-        sendWelcomeEmail({
-          to: payload.email,
-          name: payload.name
-        }),
-        'welcome email'
-      );
+      void notifyWelcome({ userId: user.id });
+      void shouldSendUserEmail(user.id, 'productUpdates').then((allowed) => {
+        if (!allowed) return;
+        return safeSendEmail(
+          sendWelcomeEmail({
+            to: payload.email,
+            name: payload.name
+          }),
+          'welcome email'
+        );
+      });
     }
 
     return res.json({ user: mapProfile(profile, user), isNewUser });

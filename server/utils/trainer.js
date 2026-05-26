@@ -2,6 +2,20 @@ import { chunkText } from './chunker.js';
 import { embedChunks } from './embedder.js';
 import { checkLimit } from './planChecker.js';
 import { supabase } from '../lib/supabase.js';
+import {
+  notifyPlanLimit,
+  notifyTrainingComplete,
+  notifyTrainingFailed
+} from '../services/notificationService.js';
+
+const getPersonalityLabel = async (personalityId) => {
+  const { data } = await supabase
+    .from('personalities')
+    .select('name')
+    .eq('id', personalityId)
+    .maybeSingle();
+  return data?.name || 'Your clone';
+};
 
 export const trainOnContent = async ({ userId, personalityId, content, sourceType, trainingDataId = null }) => {
   try {
@@ -26,6 +40,14 @@ export const trainOnContent = async ({ userId, personalityId, content, sourceTyp
           .eq('id', trainingDataId)
           .eq('user_id', userId);
       }
+      const cloneName = await getPersonalityLabel(personalityId);
+      void notifyPlanLimit({ userId, message: planGate.reason });
+      void notifyTrainingFailed({
+        userId,
+        cloneName,
+        personalityId,
+        reason: planGate.reason
+      });
       return { success: false, error: planGate.reason };
     }
 
@@ -54,6 +76,14 @@ export const trainOnContent = async ({ userId, personalityId, content, sourceTyp
         .eq('user_id', userId);
     }
 
+    const cloneName = await getPersonalityLabel(personalityId);
+    void notifyTrainingComplete({
+      userId,
+      cloneName,
+      personalityId,
+      chunks: chunks.length
+    });
+
     return { success: true, chunks: chunks.length };
   } catch (error) {
     if (trainingDataId) {
@@ -63,6 +93,13 @@ export const trainOnContent = async ({ userId, personalityId, content, sourceTyp
         .eq('id', trainingDataId)
         .eq('user_id', userId);
     }
+    const cloneName = await getPersonalityLabel(personalityId);
+    void notifyTrainingFailed({
+      userId,
+      cloneName,
+      personalityId,
+      reason: error.message
+    });
     return { success: false, error: error.message };
   }
 };

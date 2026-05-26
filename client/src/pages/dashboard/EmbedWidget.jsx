@@ -193,7 +193,7 @@ const EmbedWidget = () => {
           <div className="embed-code-head">
             <div>
               <h3>Floating widget</h3>
-              <p>Best for a small chat launcher.</p>
+              <p>Paste before <code>&lt;/body&gt;</code> on any site — launcher appears in the corner.</p>
             </div>
             <button type="button" onClick={() => copy('widget', widgetCode)} disabled={!isLive}>
               {copied === 'widget' ? <Check size={14} /> : <Copy size={14} />}
@@ -201,6 +201,10 @@ const EmbedWidget = () => {
             </button>
           </div>
           <pre><code>{widgetCode}</code></pre>
+          <p className="embed-widget-hint">
+            Test locally: open <code>/embed-demo.html</code> on your dev server and set <code>data-slug</code> to{' '}
+            <strong>{clone?.slug}</strong>.
+          </p>
         </section>
 
         <div className="embed-actions">
@@ -469,6 +473,19 @@ const EmbedStyles = () => (
     .embed-actions a[aria-disabled='true'] {
       cursor: not-allowed;
       opacity: 0.42;
+    }
+
+    .embed-widget-hint {
+      margin: 12px 0 0;
+      color: rgba(255,255,255,0.36);
+      font: 12px/1.6 Inter, system-ui, sans-serif;
+    }
+
+    .embed-widget-hint code,
+    .embed-code-head p code {
+      color: rgba(0,212,255,0.85);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
     }
 
     .embed-code-card pre {

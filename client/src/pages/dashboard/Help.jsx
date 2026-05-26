@@ -11,6 +11,7 @@ import {
   HelpCircle,
   LifeBuoy,
   Link as LinkIcon,
+  Bell,
   Mail,
   MessageCircle,
   Mic,
@@ -21,30 +22,157 @@ import {
   Zap
 } from 'lucide-react';
 
+const SUPPORT_EMAIL = 'alterai.tech@gmail.com';
+
 const docs = [
+  {
+    id: 'clone-setup',
+    category: 'Basics',
+    icon: Sparkles,
+    title: 'Complete clone setup (step by step)',
+    summary: 'End-to-end guide: account → clone → train → test → publish → share or embed.',
+    readTime: '12 min',
+    sections: [
+      {
+        heading: 'Overview',
+        body: [
+          'Alter AI lets you build a public AI clone trained on your content. Visitors chat at /chat/your-slug. You manage everything from the dashboard.',
+          'Follow the steps below in order. Skipping training or publishing too early is the most common reason clones give weak answers.'
+        ]
+      },
+      {
+        heading: 'Step 1 — Sign in and open the dashboard',
+        steps: [
+          'Go to Auth and sign in with Google, GitHub, or X (via Supabase).',
+          'After redirect, you land on Dashboard Home.',
+          'Open Settings once to confirm your display name and avatar if you want them on account surfaces.'
+        ]
+      },
+      {
+        heading: 'Step 2 — Create a clone',
+        steps: [
+          'Open Create Clone (or My Clones → create).',
+          'Set Name (how the clone introduces itself), Bio (what it represents), and Tone (friendly, professional, etc.).',
+          'Pick a slug — lowercase, no spaces — this becomes your public URL: /chat/your-slug.',
+          'Add Topics (press Enter after each) so starter questions and retrieval stay focused.',
+          'Optional: Welcome message, topics to avoid, and avatar color.',
+          'Save. The clone starts as draft/private.'
+        ]
+      },
+      {
+        heading: 'Step 3 — Add training data',
+        steps: [
+          'Open Training Data and select your clone.',
+          'Add at least one source: Paste text, Q&A pairs, PDF/DOCX (Pro+), or links where your plan allows.',
+          'Wait until status shows trained (embeddings are generated locally, then stored in Supabase).',
+          'Add Q&A for facts that must stay exact: pricing, policies, booking steps, FAQs.',
+          'Retest after each major upload — answers improve as chunk count grows.'
+        ]
+      },
+      {
+        heading: 'Step 4 — Test before going live',
+        steps: [
+          'From My Clones, open the chat preview or visit /chat/your-slug while logged in.',
+          'Ask 5–10 real visitor questions. If answers are vague, add more training — do not publish yet.',
+          'Edit welcome message and topics on the clone if starters feel off.',
+          'Use Clear chat in the preview to reset the session while testing.'
+        ]
+      },
+      {
+        heading: 'Step 5 — Publish',
+        steps: [
+          'Open Share for that clone (or publish from My Clones).',
+          'Turn visibility to Public / Live. Publishing requires at least one trained source.',
+          'Copy the public link and open it in an incognito window to confirm visitors see the chat.',
+          'Only share or embed after this check passes.'
+        ]
+      },
+      {
+        heading: 'Step 6 — Share or embed',
+        steps: [
+          'Share page: copy link, QR, or social share actions.',
+          'Embed Widget (Creator plan): copy iframe or floating widget script for your website.',
+          'Floating widget: paste script before </body>; test locally with /embed-demo.html and your slug.',
+          'Track visits and conversations under Analytics.'
+        ]
+      },
+      {
+        heading: 'Optional — Voice (Creator + ElevenLabs)',
+        body: [
+          'Voice cloning in Alter requires Creator plan in the app and an ElevenLabs Starter (or higher) API key on the server. Record 30+ seconds on Dashboard → Voice, then enable voice in chat.',
+          'If voice is not configured yet, text chat and embed still work normally.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'environment-setup',
+    category: 'Basics',
+    icon: Settings,
+    title: 'Environment & database setup',
+    summary: 'Configure .env, Supabase SQL, storage buckets, and run client + server locally.',
+    readTime: '10 min',
+    sections: [
+      {
+        heading: 'Prerequisites',
+        list: [
+          'Node.js 18+',
+          'Supabase project (Auth + Postgres + Storage)',
+          'Google Gemini API key (chat)',
+          'Razorpay keys (billing — optional for local dev)'
+        ]
+      },
+      {
+        heading: 'Root .env file',
+        body: [
+          'Copy .env.example to .env in the project root. The client reads VITE_* variables; the server reads the rest.',
+          'VITE_API_URL should point to your Express API (e.g. http://localhost:3001). CLIENT_URL should match your Vite dev URL (e.g. http://localhost:5173).',
+          'Never put SUPABASE_SERVICE_ROLE_KEY or ElevenLabs keys in the frontend — server only.'
+        ]
+      },
+      {
+        heading: 'Run SQL in Supabase',
+        body: [
+          'Open Supabase → SQL Editor and run the scripts under server/sql/ for your project. At minimum: personalities/training tables (your schema), match_personality_embeddings.sql, billing_razorpay.sql, user_profile_settings.sql, user_notifications.sql, share_events.sql, voice_profiles.sql if using voice.',
+          'Create Storage buckets: training-files (training uploads), avatars (profile photos), voice-samples (private, for voice cloning).'
+        ]
+      },
+      {
+        heading: 'Run locally',
+        steps: [
+          'Terminal 1: cd server → npm install → npx nodemon (port 3001).',
+          'Terminal 2: cd client → npm install → npm run dev (port 5173).',
+          'Open http://localhost:5173, sign in, and confirm API calls succeed (no long 401 timeouts).',
+          'If auth fails with connect timeout, check VITE_SUPABASE_URL, firewall/VPN, and that the Supabase project is not paused.'
+        ]
+      }
+    ]
+  },
   {
     id: 'getting-started',
     category: 'Basics',
     icon: Sparkles,
-    title: 'Getting started with Alter',
-    summary: 'Create your first AI clone, train it, publish it, and share it with visitors.',
-    readTime: '6 min',
+    title: 'Quick start summary',
+    summary: 'Short checklist after your environment is configured.',
+    readTime: '3 min',
     sections: [
       {
-        heading: 'Recommended setup flow',
-        body: [
-          'Start by creating one focused clone. Give it a clear name, short bio, tone, and a simple slug that you are comfortable sharing publicly.',
-          'Add training data next. A clone can only answer well when it has useful source material, so upload documents, paste writing samples, add Q&A pairs, or connect supported content sources.',
-          'Test the clone from your chat page before publishing. Ask questions your visitors are likely to ask and add more training data when answers feel thin or generic.'
+        heading: 'Five-minute checklist',
+        list: [
+          'Create one clone with a clear slug.',
+          'Add training → wait for trained status.',
+          'Test at /chat/slug with real questions.',
+          'Publish from Share when answers are good enough.',
+          'Copy link or embed code (Creator for website widget).'
         ]
       },
       {
         heading: 'Before going public',
         list: [
-          'Use a short slug such as your name, brand, or project.',
-          'Add at least one high-quality training source.',
-          'Check the welcome message and starter questions.',
-          'Publish only when answers are accurate enough for real visitors.'
+          'Slug is short and memorable (your name or brand).',
+          'At least one high-quality trained source exists.',
+          'Welcome message sets expectations for visitors.',
+          'You tested in an incognito window after publishing.'
         ]
       }
     ]
@@ -54,14 +182,32 @@ const docs = [
     category: 'Clones',
     icon: MessageCircle,
     title: 'Managing clones',
-    summary: 'Understand clone status, editing, deleting, and public chat behavior.',
-    readTime: '5 min',
+    summary: 'Draft vs live, editing, publishing rules, and public chat behavior.',
+    readTime: '6 min',
     sections: [
       {
         heading: 'Clone statuses',
         body: [
-          'Draft clones are private and only visible inside your dashboard. Live clones are public and can be opened from the share link.',
-          'Training status depends on the amount and processing state of your uploaded or pasted source material. More complete training produces better answers.'
+          'Draft / private: only you see the clone in the dashboard. Public chat and embeds return not found for visitors.',
+          'Live / public: anyone with the link can open /chat/your-slug and send messages (within plan rate limits).',
+          'Training strength grows with more chunks — check Training Data and Analytics when answers feel shallow.'
+        ]
+      },
+      {
+        heading: 'Editing a clone',
+        steps: [
+          'My Clones → Edit on a card (or open clone settings).',
+          'Update name, bio, tone, topics, avoid list, welcome message, slug (careful — old links break if you change slug).',
+          'Save changes. Retest chat after major edits.',
+          'Use Delete only when you want to remove the clone and its training permanently.'
+        ]
+      },
+      {
+        heading: 'Publishing rules',
+        list: [
+          'You must have at least one trained source before publish.',
+          'Unpublish (draft) anytime from Share — embeds and public links stop working for visitors.',
+          'Rate limits apply per visitor per day and per creator per month depending on plan.'
         ]
       },
       {
@@ -70,7 +216,8 @@ const docs = [
           'Name: clear and recognizable.',
           'Bio: one or two sentences that explain who the clone represents.',
           'Tone: match how you want the clone to sound in public conversations.',
-          'Welcome message: explain what visitors can ask without overpromising.'
+          'Welcome message: explain what visitors can ask without overpromising.',
+          'Topics: 3–6 focused themes visitors can tap as starters.'
         ]
       }
     ]
@@ -80,14 +227,21 @@ const docs = [
     category: 'Training',
     icon: FolderOpen,
     title: 'Training data guide',
-    summary: 'Learn what to upload, how to structure knowledge, and how to improve answers.',
-    readTime: '8 min',
+    summary: 'Sources by plan, processing flow, and how to improve answer quality.',
+    readTime: '9 min',
     sections: [
+      {
+        heading: 'How training works',
+        body: [
+          'Content is chunked (~400 tokens), embedded locally with Xenova (768-dim vectors), stored in Supabase pgvector, then retrieved when visitors ask questions. Gemini generates replies using that context plus your clone tone and bio.',
+          'After upload, wait for status trained. Failed items show an error — fix content or plan limits and retry.'
+        ]
+      },
       {
         heading: 'Supported training sources',
         body: [
-          'Alter supports direct text, Q&A pairs, documents, links/RSS, and social-style content sources where enabled. The best results come from clean, specific content written in your actual voice.',
-          'Use Q&A pairs for factual answers that must be consistent, such as pricing, availability, booking steps, service policies, or frequently asked questions.'
+          'All plans: paste text, Q&A pairs, some links. Pro/Creator: PDF, DOCX, more files and sources. Creator unlocks additional social imports where enabled in Training Data.',
+          'Use Q&A pairs for facts that must stay consistent: pricing, policies, contact info, booking steps.'
         ]
       },
       {
@@ -113,23 +267,33 @@ const docs = [
     category: 'Sharing',
     icon: LinkIcon,
     title: 'Sharing your clone',
-    summary: 'Publish your clone, copy the public link, and share it across your channels.',
-    readTime: '4 min',
+    summary: 'Publish, copy links, QR codes, and social distribution.',
+    readTime: '5 min',
     sections: [
+      {
+        heading: 'Share page workflow',
+        steps: [
+          'Dashboard → Share (pick clone if you have several).',
+          'Toggle Public / Live when training is ready.',
+          'Copy the chat URL — format: your-domain.com/chat/slug.',
+          'Use QR, platform buttons, or copy actions; share events may appear in Analytics.',
+          'Switch back to private while editing sensitive training.'
+        ]
+      },
       {
         heading: 'Public links',
         body: [
-          'The Share page is the main control center for public visibility. When a clone is public, anyone with the link can open the chat page and start a conversation.',
-          'Keep a clone private while you are still editing training data or testing answers. Public links should only be shared after the clone is ready for real visitors.'
+          'When public, anyone with the link can chat. You receive in-app notifications for new conversations if enabled under Settings → Notifications.',
+          'Test in incognito after publishing so you see exactly what visitors see.'
         ]
       },
       {
         heading: 'Where to share',
         list: [
-          'Personal website or portfolio.',
+          'Personal website, portfolio, or Link-in-bio.',
           'LinkedIn, X, WhatsApp, and creator profiles.',
           'Email signatures and newsletters.',
-          'Landing pages, product pages, and support pages.'
+          'Product pages, course pages, and support docs.'
         ]
       }
     ]
@@ -139,36 +303,106 @@ const docs = [
     category: 'Embed',
     icon: Code2,
     title: 'Embedding Alter on your website',
-    summary: 'Use iframe or floating widget snippets to place your clone on a website.',
-    readTime: '7 min',
-    code: `<iframe
-  src="https://your-domain.com/chat/your-clone?embed=true"
-  width="100%"
-  height="600"
-  style="border:0;border-radius:16px"
-  allow="microphone"
-  title="Alter AI Clone">
-</iframe>`,
+    summary: 'Iframe embed vs floating widget.js — setup, testing, and production.',
+    readTime: '10 min',
+    code: `<!-- Floating widget (Creator plan) — paste before </body> -->
+<script
+  src="https://your-domain.com/widget.js"
+  data-slug="your-clone-slug"
+  data-theme="dark"
+  data-position="bottom-right"
+  data-color="#00D4FF"
+  data-label="Chat with AI"
+  async></script>`,
     sections: [
       {
+        heading: 'Who can embed',
+        body: [
+          'Website embed codes (iframe + floating script) are available on the Creator plan. Free and Pro users can still use the public chat link anywhere.',
+          'Copy snippets from Dashboard → Embed Widget or Share → Embed tab after the clone is public.'
+        ]
+      },
+      {
+        heading: 'How the floating widget works',
+        body: [
+          'Your site loads widget.js from the same domain as your Alter app (e.g. your-domain.com/widget.js).',
+          'The script adds a corner launcher button. On click, it opens a panel with an iframe pointing to /chat/slug?embed=true&widget=true.',
+          'Chat runs inside Alter; the script is only the shell. widget.js and /chat must share one origin (your deployed frontend URL).'
+        ]
+      },
+      {
         heading: 'Iframe embed',
-        body: [
-          'Use the iframe when you want the clone to appear as a full section inside a page. This works well on portfolio pages, product support pages, and gated community pages.'
+        steps: [
+          'Copy the iframe snippet from Embed Widget.',
+          'Paste into your page HTML where the chat section should appear.',
+          'Set height to at least 560–600px for comfortable scrolling.',
+          'URL includes ?embed=true for a compact chat layout without the full marketing header.'
         ]
       },
       {
-        heading: 'Floating widget',
-        body: [
-          'Use the widget script when you want a small launcher in the corner of your site. It is better for general websites where visitors may need quick access without dedicating a full page section.'
+        heading: 'Floating widget setup',
+        steps: [
+          'Publish the clone first.',
+          'Copy the script tag from Embed Widget (Share → Script tab).',
+          'Paste before </body> on every page where you want the launcher.',
+          'Set data-slug to your public clone slug exactly as in /chat/slug.',
+          'Optional: data-theme (dark|light), data-position (bottom-right, bottom-left, top-right, top-left), data-color (#hex), data-label (button text).'
         ]
       },
       {
-        heading: 'Embed checklist',
+        heading: 'Local testing',
+        steps: [
+          'Run client (npm run dev) and server (nodemon).',
+          'Edit client/public/embed-demo.html — replace YOUR_SLUG with your slug.',
+          'Open http://localhost:5173/embed-demo.html and click the launcher.',
+          'Confirm http://localhost:5173/widget.js loads (not 404).'
+        ]
+      },
+      {
+        heading: 'Production checklist',
         list: [
-          'Publish the clone before copying embed code.',
-          'Use the embed preview to check layout before shipping.',
-          'Keep the iframe height at 560px or higher for comfortable chat.',
-          'Test on mobile and desktop after adding the code to your site.'
+          'CLIENT_URL / PUBLIC_APP_URL in server .env matches your live site.',
+          'widget.js is deployed with the frontend (Vite public/ folder).',
+          'Clone is public; test embed in incognito.',
+          'If iframe is blank, check CSP frame-ancestors on your host (Alter allows embedding on /chat routes).',
+          'Third-party site must allow scripts from your Alter domain.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'notifications',
+    category: 'Account',
+    icon: Bell,
+    title: 'Notifications',
+    summary: 'Dashboard bell, email preferences, and what triggers each alert.',
+    readTime: '5 min',
+    sections: [
+      {
+        heading: 'In-app notifications (bell)',
+        body: [
+          'The bell in the dashboard top bar shows alerts: new visitor chats, training complete/failed, clone published, billing events, plan limits, and voice ready.',
+          'Click an item to mark read and jump to the relevant page. Use Mark all read or delete per item.',
+          'Requires user_notifications table — run server/sql/user_notifications.sql in Supabase if the bell shows errors.'
+        ]
+      },
+      {
+        heading: 'Settings → Notifications',
+        steps: [
+          'Open Settings → Notifications tab.',
+          'Master toggles: In-app notifications and Email notifications.',
+          'Per category: conversations, training, publish, billing, plan limits, voice, digests, product updates.',
+          'Save. Email categories only send when SMTP is configured on the server (SMTP_USER, SMTP_PASS in .env).'
+        ]
+      },
+      {
+        heading: 'What triggers alerts',
+        list: [
+          'New conversation — first message from a visitor on a public clone.',
+          'Training updates — source finished training or failed.',
+          'Clone published — visibility turned public or back to draft.',
+          'Billing — successful subscription payment or renewal reminders.',
+          'Voice ready — voice clone completed (when ElevenLabs is configured).'
         ]
       }
     ]
@@ -178,22 +412,42 @@ const docs = [
     category: 'Voice',
     icon: Mic,
     title: 'Voice cloning',
-    summary: 'Prepare clean voice samples and understand when voice features are available.',
-    readTime: '5 min',
+    summary: 'Creator plan in Alter, ElevenLabs API, recording, and chat playback.',
+    readTime: '7 min',
     sections: [
       {
-        heading: 'Recording tips',
+        heading: 'Requirements',
         list: [
-          'Record in a quiet room without music or background noise.',
-          'Use a normal speaking voice and consistent distance from the microphone.',
-          'Avoid clipped audio, long silences, and multiple speakers.',
-          'Only upload voice data you own or have permission to use.'
+          'Alter AI Creator plan (dashboard gate).',
+          'ElevenLabs Starter or higher on the API key used in server .env (ELEVENLABS_API_KEY).',
+          'Supabase bucket voice-samples (private) and voice_profiles.sql applied.',
+          'Clone must be public for visitors to hear voice in chat when enabled.'
         ]
       },
       {
-        heading: 'Availability',
+        heading: 'Setup steps',
+        steps: [
+          'Add ELEVENLABS_API_KEY to root .env (server only). Restart nodemon.',
+          'Dashboard → Voice → select clone → record at least 30 seconds in a quiet room.',
+          'Click Clone My Voice. On success, enable voice on the clone in chat settings.',
+          'On the public chat page, toggle Voice on — assistant replies can play as audio (short responses).'
+        ]
+      },
+      {
+        heading: 'Recording tips',
+        list: [
+          'Quiet room, no music or background noise.',
+          'Normal speaking voice, steady distance from the mic.',
+          'Minimum 30 seconds; more variety improves consistency.',
+          'Only use voice you own or have rights to clone.'
+        ]
+      },
+      {
+        heading: 'Troubleshooting',
         body: [
-          'Voice features may depend on your plan and the current product configuration. If voice controls are disabled, check Billing & Plans or contact support for access details.'
+          '“Subscription does not include instant voice cloning” — upgrade your ElevenLabs account (Starter+), not just Alter Creator.',
+          '“Error parsing the body” — usually fixed by server-side upload format; retry after a clean recording.',
+          'Voice toggle greyed out — voice not enabled for that clone or clone not public.'
         ]
       }
     ]
@@ -228,13 +482,21 @@ const docs = [
     category: 'Account',
     icon: Settings,
     title: 'Profile and account settings',
-    summary: 'Update your profile, avatar, website, location, and notification preferences.',
+    summary: 'Update your profile, avatar, website, location, and in-app or email notification preferences.',
     readTime: '4 min',
     sections: [
       {
         heading: 'Profile updates',
         body: [
           'Changes in Settings update the profile stored for your account and refresh across the dashboard immediately. Your avatar appears in account menus and other user-facing dashboard surfaces.'
+        ]
+      },
+      {
+        heading: 'Notifications',
+        body: [
+          'Open Settings → Notifications to control in-app alerts (dashboard bell) and email categories.',
+          'In-app alerts cover new visitor chats, training results, clone publish status, billing, plan limits, and voice cloning.',
+          'Email digests require SMTP on the server and the master “Email notifications” toggle.'
         ]
       },
       {
@@ -250,21 +512,31 @@ const docs = [
     category: 'Billing',
     icon: Zap,
     title: 'Billing and plan limits',
-    summary: 'Know when plan limits apply and how upgrades affect clone features.',
-    readTime: '4 min',
+    summary: 'Free, Pro, Creator — Razorpay upgrades and what each tier unlocks.',
+    readTime: '6 min',
     sections: [
       {
-        heading: 'Plan limits',
+        heading: 'Plans (INR via Razorpay)',
         body: [
-          'Plans can limit clone count, training sources, analytics depth, voice access, or advanced sharing features. When an action is blocked, the dashboard should explain which limit was reached.'
+          'Free: limited clones, training, and visitor messages — good for testing.',
+          'Pro: more clones, PDF/DOCX training, higher limits.',
+          'Creator: highest limits, voice cloning in Alter, website embed (iframe + widget), and full analytics-style usage.',
+          'Upgrade from Dashboard → Billing & Plans. Payments use Razorpay; keep webhook configured in production.'
+        ]
+      },
+      {
+        heading: 'When you hit a limit',
+        body: [
+          'Training upload, chunk count, visitor daily caps, or creator monthly message caps may block actions. The UI and notifications show which limit applied.',
+          'Upgrade plan or reduce usage; downgrade rules prevent paying for a lower tier while a higher one is active in the same period.'
         ]
       },
       {
         heading: 'Upgrade checklist',
         list: [
-          'Upgrade when you need more clones or training capacity.',
-          'Review plan features before publishing high-traffic embeds.',
-          'Contact support for creator or business workflows that need custom limits.'
+          'Pro when you need PDFs and more training volume.',
+          'Creator before website embed or voice cloning.',
+          'Confirm Razorpay keys and CLIENT_URL in .env for successful checkout redirect.'
         ]
       }
     ]
@@ -300,23 +572,35 @@ const docs = [
 const faqs = [
   {
     q: 'Why does my clone say it does not know something?',
-    a: 'The clone probably does not have enough relevant training data. Add direct Q&A pairs or clearer documents covering that topic, then test again.'
+    a: 'Usually missing training on that topic. Add Q&A pairs or documents that answer it directly, wait for trained status, then test again.'
   },
   {
     q: 'Can I keep a clone private?',
-    a: 'Yes. Keep it in draft/private mode from the Share page. Private clones cannot be opened by public visitors or embedded on a website.'
+    a: 'Yes. Keep draft/private on the Share page. Visitors cannot open /chat/slug or use embed codes until you publish.'
   },
   {
-    q: 'Why is my embed not loading?',
-    a: 'Check that the clone is public, the iframe source uses the correct chat URL, and your website does not block iframes or third-party scripts with a strict content security policy.'
+    q: 'Why is my embed or widget not loading?',
+    a: 'Confirm the clone is public, data-slug matches your slug, widget.js loads from the same domain as /chat (your CLIENT_URL), and your site allows that script/iframe. Test with /embed-demo.html locally first.'
+  },
+  {
+    q: 'Why do I get 401 errors or login timeouts?',
+    a: 'Often Supabase connectivity: check VITE_SUPABASE_URL and keys in .env, project not paused, no VPN/firewall block, restart server and client. Run user_notifications.sql if the bell fails.'
+  },
+  {
+    q: 'Why does voice cloning fail?',
+    a: 'You need Alter Creator plus ElevenLabs Starter+ on the API key in server .env. Record 30+ seconds, ensure voice-samples bucket exists, restart nodemon after adding ELEVENLABS_API_KEY.'
   },
   {
     q: 'Where does my profile photo appear?',
-    a: 'Your avatar is used across dashboard account surfaces. Clone avatars are separate and are managed from clone creation or clone settings.'
+    a: 'Settings → profile avatar shows on dashboard account UI. Clone color/avatar is set per clone at creation or edit.'
+  },
+  {
+    q: 'How do notifications work?',
+    a: 'The dashboard bell shows in-app alerts when enabled under Settings → Notifications. Email alerts need SMTP configured in server .env and Email notifications turned on.'
   },
   {
     q: 'Can I delete old training data?',
-    a: 'Use the Training Data page to review and remove outdated sources when available. After changing sources, retest important answers.'
+    a: 'Use Training Data to remove outdated sources, then retest key questions. Removing chunks may change answers until you add better material.'
   }
 ];
 
@@ -325,16 +609,24 @@ const quickLinks = [
   { label: 'Add training data', href: '/dashboard/training', icon: FolderOpen },
   { label: 'Share a clone', href: '/dashboard/share', icon: LinkIcon },
   { label: 'Embed widget', href: '/dashboard/embed', icon: Code2 },
+  { label: 'Voice cloning', href: '/dashboard/voice', icon: Mic },
   { label: 'Billing', href: '/dashboard/billing', icon: Zap },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings }
 ];
 
 const categories = ['All', ...Array.from(new Set(docs.map((doc) => doc.category)))];
 
+/** Keep wheel/touch scroll inside help panels (Locomotive/Lenis no longer wraps dashboard). */
+const trapPanelWheel = (event) => {
+  const el = event.currentTarget;
+  if (el.scrollHeight <= el.clientHeight + 1) return;
+  event.stopPropagation();
+};
+
 const Help = () => {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
-  const [activeDocId, setActiveDocId] = useState(docs[0].id);
+  const [activeDocId, setActiveDocId] = useState('clone-setup');
   const [openFaq, setOpenFaq] = useState(faqs[0].q);
   const [copied, setCopied] = useState('');
 
@@ -343,7 +635,10 @@ const Help = () => {
     return docs.filter((doc) => {
       const matchesCategory = category === 'All' || doc.category === category;
       const searchable = `${doc.title} ${doc.summary} ${doc.category} ${doc.sections
-        .map((section) => `${section.heading} ${(section.body || []).join(' ')} ${(section.list || []).join(' ')}`)
+        .map(
+          (section) =>
+            `${section.heading} ${(section.body || []).join(' ')} ${(section.list || []).join(' ')} ${(section.steps || []).join(' ')}`
+        )
         .join(' ')}`.toLowerCase();
       return matchesCategory && (!normalizedQuery || searchable.includes(normalizedQuery));
     });
@@ -373,10 +668,10 @@ const Help = () => {
           <div className="help-support-card">
             <LifeBuoy size={18} />
             <strong>Need help?</strong>
-            <span>Send details, clone name, and screenshots when possible.</span>
-            <a href="mailto:support@alter.ai?subject=Alter%20AI%20support%20request">
+            <span>Email {SUPPORT_EMAIL} with your clone slug, what you tried, and screenshots if possible.</span>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Alter%20AI%20support%20request`}>
               <Mail size={14} />
-              Contact support
+              {SUPPORT_EMAIL}
             </a>
           </div>
         </section>
@@ -408,7 +703,7 @@ const Help = () => {
         </section>
 
         <section className="help-layout">
-          <aside className="help-doc-list">
+          <aside className="help-doc-list help-panel-scroll" onWheel={trapPanelWheel}>
             {filteredDocs.length ? (
               filteredDocs.map((doc) => {
                 const Icon = doc.icon;
@@ -448,37 +743,46 @@ const Help = () => {
               </div>
             </header>
 
-            {activeDoc.sections.map((section) => (
-              <section key={section.heading}>
-                <h3>{section.heading}</h3>
-                {section.body?.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-                {section.list ? (
-                  <ul>
-                    {section.list.map((item) => (
-                      <li key={item}>
-                        <Check size={14} />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-            ))}
+            <div className="help-article-body help-panel-scroll" onWheel={trapPanelWheel}>
+              {activeDoc.sections.map((section) => (
+                <section key={section.heading}>
+                  <h3>{section.heading}</h3>
+                  {section.body?.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                  {section.steps ? (
+                    <ol className="help-steps">
+                      {section.steps.map((step) => (
+                        <li key={step}>{step}</li>
+                      ))}
+                    </ol>
+                  ) : null}
+                  {section.list ? (
+                    <ul>
+                      {section.list.map((item) => (
+                        <li key={item}>
+                          <Check size={14} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              ))}
 
-            {activeDoc.code ? (
-              <section className="help-code-section">
-                <div className="help-code-head">
-                  <h3>Example snippet</h3>
-                  <button type="button" onClick={() => copySnippet(activeDoc)}>
-                    {copied === activeDoc.id ? <Check size={14} /> : <Copy size={14} />}
-                    {copied === activeDoc.id ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
-                <pre><code>{activeDoc.code}</code></pre>
-              </section>
-            ) : null}
+              {activeDoc.code ? (
+                <section className="help-code-section">
+                  <div className="help-code-head">
+                    <h3>Example snippet</h3>
+                    <button type="button" onClick={() => copySnippet(activeDoc)}>
+                      {copied === activeDoc.id ? <Check size={14} /> : <Copy size={14} />}
+                      {copied === activeDoc.id ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <pre><code>{activeDoc.code}</code></pre>
+                </section>
+              ) : null}
+            </div>
           </article>
         </section>
 
@@ -698,14 +1002,49 @@ const HelpStyles = () => (
       display: grid;
       grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
       gap: 18px;
-      align-items: start;
+      align-items: stretch;
+    }
+
+    .help-doc-list,
+    .help-article {
+      --help-panel-height: min(560px, calc(100dvh - 340px));
+      height: var(--help-panel-height);
+      min-height: var(--help-panel-height);
+      max-height: var(--help-panel-height);
     }
 
     .help-doc-list {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
       padding: 10px;
-      overflow: visible;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+    }
+
+    .help-panel-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.06);
+    }
+
+    .help-panel-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .help-panel-scroll::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+    }
+
+    .help-panel-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 4px;
+    }
+
+    .help-panel-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.32);
     }
 
     .help-doc-list button {
@@ -765,6 +1104,9 @@ const HelpStyles = () => (
 
     .help-article {
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       padding: 24px;
     }
 
@@ -772,8 +1114,23 @@ const HelpStyles = () => (
       display: flex;
       align-items: center;
       gap: 14px;
+      flex-shrink: 0;
       border-bottom: 1px solid rgba(255,255,255,0.07);
       padding-bottom: 20px;
+    }
+
+    .help-article-body {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      padding-right: 6px;
+    }
+
+    .help-article-body > section:first-of-type {
+      margin-top: 20px;
     }
 
     .help-article header > div {
@@ -853,6 +1210,25 @@ const HelpStyles = () => (
       margin-top: 3px;
       color: #059669;
       flex-shrink: 0;
+    }
+
+    .help-steps {
+      margin: 0 0 14px;
+      padding-left: 22px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .help-steps li {
+      color: rgba(240,238,248,0.58);
+      font: 14px/1.7 Inter, system-ui, sans-serif;
+      padding-left: 4px;
+    }
+
+    .help-steps li::marker {
+      color: rgba(0,212,255,0.75);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
     }
 
     .help-code-section {
@@ -993,8 +1369,9 @@ const HelpStyles = () => (
         grid-template-columns: 1fr;
       }
 
-      .help-doc-list {
-        overflow: visible;
+      .help-doc-list,
+      .help-article {
+        --help-panel-height: min(480px, calc(100dvh - 360px));
       }
     }
 

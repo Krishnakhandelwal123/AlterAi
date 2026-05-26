@@ -26,7 +26,8 @@ function getOrCreateVisitorId() {
   return id;
 }
 
-export function useChat(slug) {
+export function useChat(slug, options = {}) {
+  const { onAssistantDone } = options;
   const { session } = useContext(AuthContext) || {};
   const token = session?.access_token;
 
@@ -169,6 +170,7 @@ export function useChat(slug) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let fullResponse = '';
 
       while (true) {
         const { value, done } = await reader.read();
@@ -183,6 +185,7 @@ export function useChat(slug) {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.type === 'token') {
+              fullResponse += data.content || '';
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === aiMsgId ? { ...m, content: m.content + data.content } : m
@@ -200,6 +203,9 @@ export function useChat(slug) {
                 localStorage.removeItem(getClearedConversationKey(slug, visitorId.current));
               }
               if (data.remaining !== undefined) setRemainingMessages(data.remaining);
+              if (fullResponse.trim()) {
+                onAssistantDone?.(fullResponse.trim());
+              }
             } else if (data.type === 'error') {
               setMessages((prev) =>
                 prev.map((m) =>
@@ -226,7 +232,7 @@ export function useChat(slug) {
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, personality, slug, conversationId, scrollToBottom, token]);
+  }, [input, isStreaming, personality, slug, conversationId, scrollToBottom, token, onAssistantDone]);
 
   const clearChat = useCallback(() => {
     if (isStreaming) {

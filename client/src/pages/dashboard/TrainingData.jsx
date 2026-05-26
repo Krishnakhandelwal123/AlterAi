@@ -246,14 +246,30 @@ const TrainingData = () => {
   };
 
   const connectSocial = async (platform, handle, accessToken) => {
-    if (!accessToken) throw new Error('Access token is required');
+    if (!personalityId) {
+      throw new Error('Select a clone at the top of Training Data before connecting a platform.');
+    }
+    const token = String(accessToken || '').trim();
+    const tokenOptional = platform === 'reddit' || platform === 'medium';
+    if (!tokenOptional && token.length < 8) {
+      throw new Error('Access token must be at least 8 characters (paste your full platform token).');
+    }
+    const trimmedHandle = String(handle || '').trim();
     const res = await fetch(`${API_URL}/api/training/social/connect`, {
       method: 'POST',
       headers: { ...authHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ personalityId, platform, handle, accessToken })
+      body: JSON.stringify({
+        personalityId,
+        platform,
+        ...(trimmedHandle ? { handle: trimmedHandle } : {}),
+        ...(token || !tokenOptional ? { accessToken: token || 'public-only' } : {})
+      })
     });
     const payload = await res.json();
-    if (!res.ok || !payload.success) throw new Error(payload.error || 'Connection failed');
+    if (!res.ok || !payload.success) {
+      const detail = Array.isArray(payload.details) ? payload.details.join(' · ') : '';
+      throw new Error(detail || payload.error || 'Connection failed');
+    }
   };
 
   const syncSocial = async (platform) => {
