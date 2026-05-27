@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Mail, Github, Twitter, Instagram } from 'lucide-react';
 
 const Footer = () => {
@@ -40,11 +41,9 @@ const Footer = () => {
         <div>
           <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Plans</h4>
           <ul className="space-y-4">
-            {['Free', 'Pro', 'Creator'].map((item) => (
-              <li key={item}>
-                <a href="#" className="text-secondary hover:text-white transition-colors text-sm">{item}</a>
-              </li>
-            ))}
+            <li><Link to="/auth" className="text-secondary hover:text-white transition-colors text-sm">Free</Link></li>
+            <li><Link to="/dashboard/billing#plans" className="text-secondary hover:text-white transition-colors text-sm">Pro</Link></li>
+            <li><Link to="/dashboard/billing#plans" className="text-secondary hover:text-white transition-colors text-sm">Creator</Link></li>
           </ul>
         </div>
 
@@ -52,11 +51,10 @@ const Footer = () => {
         <div>
           <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Support</h4>
           <ul className="space-y-4">
-            {['FAQ', 'Warranty', 'Contact', 'Press Kit'].map((item) => (
-              <li key={item}>
-                <a href="#" className="text-secondary hover:text-white transition-colors text-sm">{item}</a>
-              </li>
-            ))}
+            <li><Link to="/dashboard/help" className="text-secondary hover:text-white transition-colors text-sm">Help & Docs</Link></li>
+            <li><Link to="/legal/contact" className="text-secondary hover:text-white transition-colors text-sm">Contact</Link></li>
+            <li><Link to="/legal/refund" className="text-secondary hover:text-white transition-colors text-sm">Refund Policy</Link></li>
+            <li><a href="mailto:alterai.tech@gmail.com" className="text-secondary hover:text-white transition-colors text-sm">alterai.tech@gmail.com</a></li>
           </ul>
         </div>
 
@@ -86,9 +84,9 @@ const Footer = () => {
           Designed for the future.
         </p>
         <div className="flex gap-8 text-white/20 text-[10px] uppercase tracking-widest">
-           <a href="#" className="hover:text-white transition-colors">Privacy</a>
-           <a href="#" className="hover:text-white transition-colors">Terms</a>
-           <a href="#" className="hover:text-white transition-colors">Cookies</a>
+           <Link to="/legal/privacy" className="hover:text-white transition-colors">Privacy</Link>
+           <Link to="/legal/terms" className="hover:text-white transition-colors">Terms</Link>
+           <Link to="/legal/refund" className="hover:text-white transition-colors">Refunds</Link>
         </div>
       </div>
     </motion.footer>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import { dashboardNavSections } from './navConfig';
@@ -10,6 +10,7 @@ const linkBase =
   'group flex items-center gap-3 px-5 py-2.5 font-dashboard-nav text-[11px] tracking-wide text-white/40 transition-colors border-l-2 border-transparent';
 
 const DashboardSidebar = () => {
+  const [query, setQuery] = useState('');
   const { clones, totals } = useClones();
   const { currentPlan, limits } = useBillingSubscription();
   const hasActiveVoice = clones.some((clone) => clone.voice_enabled);
@@ -19,6 +20,18 @@ const DashboardSidebar = () => {
   const planLabel = `${currentPlan.charAt(0).toUpperCase()}${currentPlan.slice(1)} plan`;
   const upgradeTarget = currentPlan === 'creator' ? '/dashboard/billing' : '/dashboard/billing#plans';
   const upgradeLabel = currentPlan === 'free' ? 'Upgrade to Pro ->' : currentPlan === 'pro' ? 'Upgrade to Creator ->' : 'Manage plan ->';
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredSections = useMemo(() => {
+    if (!normalizedQuery) return dashboardNavSections;
+    return dashboardNavSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) =>
+          `${item.label} ${section.label}`.toLowerCase().includes(normalizedQuery)
+        )
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [normalizedQuery]);
 
   return (
   <aside className="dashboard-sidebar fixed left-0 top-0 z-20 hidden h-screen w-[240px] flex-col border-r border-white/[0.05] bg-[#0A0A0A] md:flex">
@@ -41,6 +54,8 @@ const DashboardSidebar = () => {
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/25" strokeWidth={1.75} />
             <input
               type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
               placeholder="Search..."
               className="dashboard-input-search w-full rounded-lg border border-white/[0.07] bg-white/[0.04] py-2 pl-9 pr-3 text-[10px] text-white/70 placeholder:text-white/25 outline-none focus:border-[rgba(0,212,255,0.35)]"
               style={{ fontFamily: "'DM Mono', monospace" }}
@@ -64,7 +79,7 @@ const DashboardSidebar = () => {
           }
         }}
       >
-        {dashboardNavSections.map((section) => (
+        {filteredSections.map((section) => (
           <div key={section.id} className="mb-1">
             <p
               className="px-5 pb-2 pt-4 text-[8px] uppercase tracking-[0.15em] text-white/20"
@@ -116,6 +131,14 @@ const DashboardSidebar = () => {
             </ul>
           </div>
         ))}
+        {filteredSections.length === 0 && (
+          <p
+            className="px-5 py-4 text-[10px] text-white/28"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            No matching pages
+          </p>
+        )}
       </nav>
 
       <div className="mt-auto shrink-0 space-y-3 border-t border-white/[0.05] px-5 py-4">

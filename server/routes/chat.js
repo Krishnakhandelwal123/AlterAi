@@ -111,7 +111,7 @@ router.get('/:slug/profile', async (req, res) => {
 
     // Chat pages are only available after the creator publishes the clone.
     if (!personality.is_public) {
-      return res.status(404).json({ error: 'Clone not found or not public yet', code: 'NOT_FOUND' });
+      return res.status(404).json({ error: 'This clone is not live yet', code: 'CLONE_NOT_LIVE' });
     }
 
     const { data: owner } = await supabaseAdmin
@@ -182,7 +182,7 @@ router.post('/:slug/message', chatRateLimiter, async (req, res) => {
 
   // Chat messages are blocked until the clone is live/public.
   if (!personality.is_public) {
-    return res.status(404).json({ error: 'Clone not found or not live' });
+    return res.status(404).json({ error: 'This clone is not live yet', code: 'CLONE_NOT_LIVE' });
   }
 
   // Check visitor rate limit

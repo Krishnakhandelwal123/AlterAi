@@ -86,7 +86,14 @@ const Auth = () => {
         )}
 
         <p className="reveal-up mt-8 text-center text-[10px] text-white/20" style={{ fontFamily: "'DM Mono', monospace", animationDelay: '740ms' }}>
-          By continuing you agree to our Terms and Privacy Policy.
+          By continuing you agree to our{' '}
+          <Link to="/legal/terms" className="text-[rgba(0,212,255,0.7)] hover:text-[rgba(0,212,255,1)]">
+            Terms
+          </Link>{' '}
+          and{' '}
+          <Link to="/legal/privacy" className="text-[rgba(0,212,255,0.7)] hover:text-[rgba(0,212,255,1)]">
+            Privacy Policy
+          </Link>.
         </p>
       </div>
       <div className="absolute right-10 bottom-10 w-64 h-64 rounded-full bg-[rgba(0,212,255,0.88)] opacity-10 blur-[120px]" />

@@ -30,7 +30,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-[999] py-8 px-8 md:px-14 nav-fade-in transition-colors duration-300 ${
+      className={`fixed top-0 left-0 w-full z-[999] px-5 py-5 sm:px-8 sm:py-8 md:px-14 nav-fade-in transition-colors duration-300 ${
         isScrolling
           ? 'bg-[#020814]/55 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.45)]'
           : 'bg-transparent border-b border-transparent'
@@ -41,7 +41,7 @@ const Navbar = () => {
           ALTER
         </a>
 
-        <div className="flex items-center gap-3 md:gap-5 luxury-nav-links">
+        <div className="hidden items-center gap-3 md:gap-5 luxury-nav-links sm:flex">
           <a href="#about">Creators</a>
           <span aria-hidden>·</span>
           <a href="#pricing">Pricing</a>
@@ -49,6 +49,18 @@ const Navbar = () => {
           <Link to="/auth">Sign In</Link>
           <Link to="/auth" className="ml-3 px-4 py-2 rounded-full border border-[#00d4ff]/55 hover:bg-[#00d4ff]/18">
             Clone Yourself →
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2 sm:hidden" style={{ fontFamily: "'DM Mono', monospace" }}>
+          <Link to="/auth" className="text-[10px] uppercase tracking-[0.12em] text-white/55">
+            Sign in
+          </Link>
+          <Link
+            to="/auth"
+            className="rounded-full border border-[#00d4ff]/45 bg-[#00d4ff]/10 px-3 py-2 text-[10px] uppercase tracking-[0.08em] text-[#00d4ff]"
+          >
+            Clone
           </Link>
         </div>
       </div>

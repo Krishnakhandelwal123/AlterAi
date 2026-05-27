@@ -34,6 +34,8 @@ export function useChat(slug, options = {}) {
   const [personality, setPersonality] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [chatErrorCode, setChatErrorCode] = useState('');
+  const [chatErrorMessage, setChatErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -54,6 +56,9 @@ export function useChat(slug, options = {}) {
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
+    setNotFound(false);
+    setChatErrorCode('');
+    setChatErrorMessage('');
 
     const headers = {};
     if (token) {
@@ -61,17 +66,35 @@ export function useChat(slug, options = {}) {
     }
 
     fetch(`${BASE}/api/chat/${slug}/profile`, { headers })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.code === 'NOT_FOUND' || !data.personality) {
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        return { ok: r.ok, status: r.status, data };
+      })
+      .then(({ ok, status, data }) => {
+        if (!ok) {
           setNotFound(true);
+          setChatErrorCode(data.code || (status >= 500 ? 'SERVER_UNAVAILABLE' : 'NOT_FOUND'));
+          setChatErrorMessage(data.error || '');
+          return;
+        }
+
+        if (!data.personality) {
+          setNotFound(true);
+          setChatErrorCode(data.code || 'NOT_FOUND');
+          setChatErrorMessage(data.error || '');
         } else {
           setNotFound(false);
+          setChatErrorCode('');
+          setChatErrorMessage('');
           setPersonality(data.personality);
           setMessages(buildWelcomeMessage(data.personality));
         }
       })
-      .catch(() => setNotFound(true))
+      .catch(() => {
+        setNotFound(true);
+        setChatErrorCode('SERVER_UNAVAILABLE');
+        setChatErrorMessage('Could not connect to the AlterAI server.');
+      })
       .finally(() => setLoading(false));
   }, [slug, token]);
 
@@ -254,6 +277,8 @@ export function useChat(slug, options = {}) {
     personality,
     loading,
     notFound,
+    chatErrorCode,
+    chatErrorMessage,
     messages,
     input,
     setInput,

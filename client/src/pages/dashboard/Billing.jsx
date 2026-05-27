@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { billingApi } from '../../api/billingApi.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import { BILLING_SUBSCRIPTION_UPDATED, useBillingSubscription } from '../../hooks/useBillingSubscription.js';
@@ -89,6 +90,7 @@ const loadRazorpayCheckout = () =>
   });
 
 const Billing = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { currentPlan, error: subscriptionError, refreshSubscription } = useBillingSubscription();
   const [busyPlan, setBusyPlan] = useState('');
@@ -128,7 +130,9 @@ const Billing = () => {
             window.dispatchEvent(new CustomEvent(BILLING_SUBSCRIPTION_UPDATED));
             setNotice(`Payment verified. ${data.plan.name} plan is active.`);
           } catch (verifyError) {
-            setError(verifyError.message || 'Payment verification failed');
+            const reason = verifyError.message || 'Payment verification failed';
+            setError(reason);
+            navigate('/payment-failed', { state: { reason } });
           } finally {
             setBusyPlan('');
           }
@@ -141,8 +145,10 @@ const Billing = () => {
       });
 
       checkout.on('payment.failed', (response) => {
+        const reason = response?.error?.description || 'Payment failed. Please try again.';
         setBusyPlan('');
-        setError(response?.error?.description || 'Payment failed. Please try again.');
+        setError(reason);
+        navigate('/payment-failed', { state: { reason } });
       });
 
       checkout.open();
@@ -308,6 +314,20 @@ const Billing = () => {
         <p className="mt-4 text-[12px] text-white/30" style={{ fontFamily: "'DM Mono', monospace" }}>
           Razorpay receipts will appear in your Razorpay payment email. In-app invoice history can be added after webhook setup.
         </p>
+        <div className="mt-4 flex flex-wrap gap-4 text-[10px]" style={{ fontFamily: "'DM Mono', monospace" }}>
+          <Link to="/legal/terms" className="text-[rgba(0,212,255,0.74)] hover:text-[rgba(0,212,255,1)]">
+            Terms
+          </Link>
+          <Link to="/legal/privacy" className="text-[rgba(0,212,255,0.74)] hover:text-[rgba(0,212,255,1)]">
+            Privacy
+          </Link>
+          <Link to="/legal/refund" className="text-[rgba(0,212,255,0.74)] hover:text-[rgba(0,212,255,1)]">
+            Refund & cancellation
+          </Link>
+          <Link to="/legal/contact" className="text-[rgba(0,212,255,0.74)] hover:text-[rgba(0,212,255,1)]">
+            Contact support
+          </Link>
+        </div>
       </div>
     </div>
   );

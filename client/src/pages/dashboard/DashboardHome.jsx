@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { FileText, Sparkles, Share2, MessageCircle, Mic2, LineChart, Link as LinkIcon } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -229,31 +229,6 @@ const DashboardHome = () => {
           <p className="text-[9px] text-white/25" style={{ fontFamily: "'DM Mono', monospace" }}>
             Free forever · No card needed
           </p>
-        </div>
-      </section>
-
-      {/* Mobile: more tools */}
-      <section className="rounded-2xl border border-white/[0.06] bg-[#0D0D0D] p-5 md:hidden" data-scroll-section>
-        <p className="text-[9px] uppercase tracking-[0.2em] text-white/35" style={{ fontFamily: "'DM Mono', monospace" }}>
-          More tools
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            ['/dashboard/voice', 'Voice'],
-            ['/dashboard/training', 'Training'],
-            ['/dashboard/share', 'Share'],
-            ['/dashboard/billing', 'Billing'],
-            ['/dashboard/help', 'Help']
-          ].map(([to, label]) => (
-            <Link
-              key={to}
-              to={to}
-              className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] text-white/50 hover:border-[rgba(0,212,255,0.3)] hover:text-[rgba(0,212,255,0.85)]"
-              style={{ fontFamily: "'DM Mono', monospace" }}
-            >
-              {label}
-            </Link>
-          ))}
         </div>
       </section>
 

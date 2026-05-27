@@ -18,8 +18,7 @@ export const AuthProvider = ({ children }) => {
     }
   });
   const [session, setSession] = useState(null);
-  // If we have a cached user, we can start with loading: false
-  const [loading, setLoading] = useState(!user);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Use refs to avoid stale closures in the auth listener

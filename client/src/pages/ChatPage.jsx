@@ -8,6 +8,7 @@ import MessageBubble from '../components/chat/MessageBubble';
 import StarterQuestions from '../components/chat/StarterQuestions';
 import ChatInput from '../components/chat/ChatInput';
 import RateLimitBanner from '../components/chat/RateLimitBanner';
+import ErrorPage from './ErrorPage';
 
 const getInitials = (name = '') => {
   const parts = name.trim().split(/\s+/);
@@ -87,6 +88,8 @@ const ChatPage = () => {
     personality,
     loading,
     notFound,
+    chatErrorCode,
+    chatErrorMessage,
     messages,
     input,
     setInput,
@@ -143,54 +146,12 @@ const ChatPage = () => {
   };
 
   if (notFound) {
-    return (
-      <div className="chat-not-found">
-        <Sparkles className="h-10 w-10 text-cyan-300" strokeWidth={1.3} />
-        <h1>Clone not found.</h1>
-        <p>This AI clone does not exist or is not public yet.</p>
-        <button type="button" onClick={() => navigate('/auth')}>
-          Create your own
-        </button>
-        <style>{`
-          .chat-not-found {
-            min-height: 100dvh;
-            background: #070708;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            padding: 24px;
-            text-align: center;
-            color: #fff;
-          }
-          .chat-not-found h1 {
-            margin: 0;
-            font-family: 'Playfair Display', serif;
-            font-size: 30px;
-            font-style: italic;
-            font-weight: 400;
-          }
-          .chat-not-found p {
-            margin: 0;
-            max-width: 340px;
-            color: rgba(255,255,255,0.48);
-            font: 14px/1.6 Inter, system-ui, sans-serif;
-          }
-          .chat-not-found button {
-            height: 42px;
-            margin-top: 8px;
-            padding: 0 20px;
-            border-radius: 999px;
-            border: 1px solid rgba(0,212,255,0.35);
-            background: rgba(0,212,255,0.1);
-            color: rgba(0,212,255,0.92);
-            cursor: pointer;
-            font: 11px 'DM Mono', monospace;
-          }
-        `}</style>
-      </div>
-    );
+    const errorType = chatErrorCode === 'CLONE_NOT_LIVE'
+      ? 'clone-not-live'
+      : chatErrorCode === 'SERVER_UNAVAILABLE'
+        ? 'server-unavailable'
+        : 'not-found';
+    return <ErrorPage type={errorType} message={chatErrorMessage} />;
   }
 
   const isHardLimit = rateLimitInfo != null || remainingMessages === 0;

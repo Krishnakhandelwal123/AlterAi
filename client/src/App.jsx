@@ -18,6 +18,8 @@ import EmbedWidget from './pages/dashboard/EmbedWidget';
 import Billing from './pages/dashboard/Billing';
 import Settings from './pages/dashboard/Settings';
 import Help from './pages/dashboard/Help';
+import LegalPage from './pages/LegalPage';
+import ErrorPage from './pages/ErrorPage';
 
 const dashboardRoutes = (
   <Route
@@ -41,6 +43,7 @@ const dashboardRoutes = (
     <Route path="billing" element={<Billing />} />
     <Route path="settings" element={<Settings />} />
     <Route path="help" element={<Help />} />
+    <Route path="*" element={<ErrorPage type="not-found" compact />} />
   </Route>
 );
 
@@ -49,7 +52,16 @@ const marketingRoutes = (
     <Route path="/" element={<Home />} />
     <Route path="/auth" element={<Auth />} />
     <Route path="/auth/callback" element={<AuthCallback />} />
-    <Route path="*" element={<Navigate to="/" replace />} />
+    <Route path="/legal/:page" element={<LegalPage />} />
+    <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
+    <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
+    <Route path="/refund" element={<Navigate to="/legal/refund" replace />} />
+    <Route path="/contact" element={<Navigate to="/legal/contact" replace />} />
+    <Route path="/404" element={<ErrorPage type="not-found" />} />
+    <Route path="/payment-failed" element={<ErrorPage type="payment-failed" />} />
+    <Route path="/server-unavailable" element={<ErrorPage type="server-unavailable" />} />
+    <Route path="/clone-not-live" element={<ErrorPage type="clone-not-live" />} />
+    <Route path="*" element={<ErrorPage type="not-found" />} />
   </>
 );
 
