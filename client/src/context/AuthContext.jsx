@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }) => {
       refreshProfile,
       signInWithGoogle: () => signInWithProvider('google'),
       signInWithGithub: () => signInWithProvider('github'),
-      signInWithTwitter: () => signInWithProvider('twitter'),
+      signInWithTwitter: () => signInWithProvider('x'),
       signOut
     }),
     [user, session, loading]
