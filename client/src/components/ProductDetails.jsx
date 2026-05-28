@@ -73,7 +73,7 @@ const ProductDetails = ({ product }) => {
              </div>
           </div>
 
-          {/* Innovation Lab Content (Sub-section) */}
+          {/* Mobile feature notes */}
           <div className="mt-12 md:hidden">
              <h4 className="mb-4 text-xl font-bold">{product.freshnessSection.title}</h4>
              <p className="text-sm leading-relaxed text-secondary">{product.freshnessSection.description}</p>

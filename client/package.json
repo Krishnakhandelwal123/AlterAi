@@ -30,7 +30,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.18",
     "jest": "^30.4.2",
     "jsdom": "^29.1.1",
@@ -38,7 +38,7 @@
     "postcss": "^8.4.35",
     "supertest": "^7.2.2",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.1.6",
+    "vite": "^8.0.14",
     "vitest": "^4.1.5"
   }
 }

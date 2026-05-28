@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Truck, ShieldCheck, Cpu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Bot, Cpu, ShieldCheck, Sparkles } from 'lucide-react';
 
 const BuyNow = ({ product }) => {
   const [selectedConfig, setSelectedConfig] = useState(0);
@@ -40,7 +41,7 @@ const BuyNow = ({ product }) => {
 
               <div className="flex gap-4 items-start">
                 <div className="p-3 rounded-xl glass" style={{ color: product.themeColor }}>
-                  <Truck className="w-6 h-6" />
+                  <Bot className="w-6 h-6" />
                 </div>
                 <div>
                   <h4 className="mb-1 text-lg font-bold">Voice Cloning</h4>
@@ -86,7 +87,7 @@ const BuyNow = ({ product }) => {
               <div className="mb-12 space-y-6">
                 <p className="text-sm font-bold tracking-widest uppercase text-white/40">Choose Configuration</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {['Standard', 'Developer'].map((config, i) => (
+                  {['Guided Setup', 'Self Serve'].map((config, i) => (
                     <button
                       key={config}
                       onClick={() => setSelectedConfig(i)}
@@ -102,7 +103,8 @@ const BuyNow = ({ product }) => {
                 </div>
               </div>
 
-              <button
+              <Link
+                to="/auth"
                 className="w-full py-6 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold transition-all duration-300 hover:scale-[1.02]"
                 style={{ 
                   backgroundColor: product.themeColor,
@@ -110,12 +112,13 @@ const BuyNow = ({ product }) => {
                   boxShadow: `0 20px 40px ${product.themeColor}33`
                 }}
               >
-                <ShoppingCart className="w-6 h-6" />
-                Add to Cart
-              </button>
+                <Sparkles className="w-6 h-6" />
+                Start Your Clone
+                <ArrowRight className="w-5 h-5" />
+              </Link>
               
               <p className="mt-6 text-xs tracking-widest text-center uppercase text-white/20">
-                Financing available starting at $150/mo
+                No credit card required for the free clone
               </p>
             </div>
           </motion.div>

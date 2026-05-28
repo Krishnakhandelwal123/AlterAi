@@ -33,7 +33,7 @@ const Home = () => {
               knowledge - 24/7, on autopilot.
             </p>
             <Link to="/auth" className="inline-block mt-8 luxury-cta reveal-up" style={{ animationDelay: '880ms' }}>
-              Request Access →
+              Create Free Clone →
             </Link>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-px bg-[#7C3AED]/20" />
@@ -45,14 +45,21 @@ const Home = () => {
         <section id="pricing" data-scroll-section>
           <BuyNow product={currentProduct} />
         </section>
-        <section data-scroll-section className="flex flex-col justify-center items-center px-6 py-32">
-          <h2 className="mb-4 text-4xl font-bold">Join the Waitlist</h2>
-          <p className="mb-8 max-w-md text-center text-secondary">
-            Be the first to know when we open public access, new integrations, and Creator-tier features.
+        <section data-scroll-section className="relative flex flex-col justify-center items-center px-6 py-32 overflow-hidden">
+          <div className="absolute inset-x-0 top-1/2 mx-auto h-px max-w-3xl bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent" />
+          <p className="luxury-label mb-5">PUBLIC BETA IS OPEN</p>
+          <h2 className="mb-4 text-4xl font-bold text-center md:text-6xl">Launch your AI presence</h2>
+          <p className="mb-8 max-w-xl text-center text-secondary">
+            Create one trained clone, publish a shareable chat link, and let visitors ask questions while you keep building.
           </p>
-          <Link to="/auth" className="px-10 py-4 rounded-full transition-all duration-300 glass hover:bg-white hover:text-black hover:scale-105">
-            Request Access
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link to="/auth" className="px-10 py-4 rounded-full transition-all duration-300 bg-white text-black hover:scale-105 hover:bg-cyan-200">
+              Create Free Clone
+            </Link>
+            <Link to="/chat/demo" className="px-10 py-4 rounded-full transition-all duration-300 glass hover:bg-white/10 hover:scale-105">
+              View Demo Chat
+            </Link>
+          </div>
         </section>
         <div data-scroll-section>
           <Footer />

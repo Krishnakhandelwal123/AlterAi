@@ -1,8 +1,19 @@
 import { GoogleGenAI } from '@google/genai';
-import { pipeline } from '@xenova/transformers';
+import { pipeline } from '@huggingface/transformers';
+import '../config/env.js';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
 const CHAT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+let _chatAI = null;
+
+const getChatAI = () => {
+  if (!_chatAI) {
+    if (!process.env.GOOGLE_GEMINI_API_KEY) {
+      throw new Error('GOOGLE_GEMINI_API_KEY is not configured');
+    }
+    _chatAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
+  }
+  return _chatAI;
+};
 
 // Lazy-loaded pipeline — downloaded & cached on first embed call.
 // all-mpnet-base-v2 produces 768-dim vectors to match the Supabase DB schema.
@@ -50,11 +61,8 @@ export const embedChunks = async (chunks) => {
  * @returns {Promise<string>}
  */
 export const generateChatResponse = async ({ prompt, systemInstruction }) => {
-  if (!process.env.GOOGLE_GEMINI_API_KEY) {
-    throw new Error('GOOGLE_GEMINI_API_KEY is not configured');
-  }
   try {
-    const response = await ai.models.generateContent({
+    const response = await getChatAI().models.generateContent({
       model: CHAT_MODEL,
       contents: prompt,
       config: { systemInstruction },

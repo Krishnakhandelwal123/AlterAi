@@ -58,14 +58,16 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* Column 4: Newsletter */}
+        {/* Column 4: Founder Notes */}
         <div>
-          <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Innovation Lab</h4>
-          <p className="text-secondary text-sm mb-6">Product updates, launch notes, and new clone features.</p>
+          <h4 className="text-white font-bold mb-8 uppercase tracking-widest text-xs">Creator Dispatch</h4>
+          <p className="text-secondary text-sm mb-6">
+            Practical notes on training better clones, improving answers, and turning conversations into leads.
+          </p>
           <div className="relative">
             <input 
               type="email" 
-              placeholder="vessel@neural.link" 
+              placeholder="creator@alter.ai" 
               className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-6 text-sm focus:outline-none focus:border-white/30 transition-all pr-14"
             />
             <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white rounded-lg text-black transition-transform duration-300 hover:scale-105">
@@ -81,7 +83,7 @@ const Footer = () => {
           &copy; 2026 ALTER AI
         </p>
         <p className="text-white/40 text-xs italic">
-          Designed for the future.
+          Built for creators who want to be available without being online.
         </p>
         <div className="flex gap-8 text-white/20 text-[10px] uppercase tracking-widest">
            <Link to="/legal/privacy" className="hover:text-white transition-colors">Privacy</Link>

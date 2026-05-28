@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { requireEnv } from '../config/env.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,8 +11,8 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://example.supabase.co';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-service-role-key';
+const supabaseUrl = requireEnv('VITE_SUPABASE_URL', { fallback: 'https://example.supabase.co' });
+const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY', { fallback: 'test-service-role-key' });
 
 if (!supabaseUrl || !serviceRoleKey) {
   // Keep booting for local dev/tests; routes will fail with clear message.

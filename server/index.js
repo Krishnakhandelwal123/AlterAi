@@ -24,6 +24,9 @@ import { rateLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, NotFoundError } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
 import { startSubscriptionReminderJob } from './jobs/subscriptionReminders.js';
+import { validateProductionEnv } from './config/env.js';
+
+validateProductionEnv();
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
