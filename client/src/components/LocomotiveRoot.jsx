@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 /**
@@ -10,9 +10,19 @@ const LocomotiveRoot = ({ children }) => {
   const locoRef = useRef(null);
   const location = useLocation();
 
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
   useLayoutEffect(() => {
     const coarse = window.matchMedia('(pointer: coarse)').matches;
-    if (coarse || !containerRef.current) return undefined;
+    if (coarse || !containerRef.current) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      containerRef.current?.scrollTo?.({ top: 0, left: 0, behavior: 'auto' });
+      return undefined;
+    }
 
     let mounted = true;
 
@@ -28,6 +38,8 @@ const LocomotiveRoot = ({ children }) => {
         smartphone: { smooth: false },
         tablet: { smooth: false }
       });
+      locoRef.current.scrollTo(0, { duration: 0, disableLerp: true });
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     };
 
     run();
