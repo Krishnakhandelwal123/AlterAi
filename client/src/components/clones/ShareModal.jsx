@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Copy, Check, QrCode, Code, ExternalLink } from 'lucide-react';
+import { getPublicChatDisplayUrl, getPublicChatUrl } from '../../utils/publicLinks.js';
 
 const ShareModal = ({ clone, onClose, onPublish }) => {
   const [copied, setCopied] = useState(false);
@@ -13,8 +14,8 @@ const ShareModal = ({ clone, onClose, onPublish }) => {
 
   const { id, name, slug, status } = clone;
   const isLive = status === 'live';
-  const fullUrl = `${window.location.origin}/chat/${slug}`;
-  const displayUrl = `alter.ai/chat/${slug}`;
+  const fullUrl = getPublicChatUrl(slug);
+  const displayUrl = getPublicChatDisplayUrl(slug);
 
   const iframeSnippet = `<iframe src="${fullUrl}?embed=true" width="100%" height="600px" style="border:none;border-radius:16px;"></iframe>`;
 

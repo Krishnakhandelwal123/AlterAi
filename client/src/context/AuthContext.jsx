@@ -129,6 +129,9 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     localStorage.removeItem('alter_user_profile');
+    setUser(null);
+    setSession(null);
+    navigate('/', { replace: true });
     if (session?.access_token) {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
@@ -136,8 +139,6 @@ export const AuthProvider = ({ children }) => {
       }).catch(() => undefined);
     }
     await supabase.auth.signOut();
-    setUser(null);
-    navigate('/');
   };
 
   const applyProfile = (profile) => {

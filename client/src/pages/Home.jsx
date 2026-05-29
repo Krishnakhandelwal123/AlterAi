@@ -1,13 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { products } from '../data/products';
 import Navbar from '../components/Navbar';
 import ProductDetails from '../components/ProductDetails';
 import BuyNow from '../components/BuyNow';
 import Footer from '../components/Footer';
+import LoadingScreen from '../components/LoadingScreen';
+import { useAuth } from '../hooks/useAuth';
 
 const Home = () => {
   const currentProduct = products[0];
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingScreen text="Checking session..." />;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="overflow-x-hidden relative min-h-screen luxury-root">

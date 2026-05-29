@@ -7,6 +7,7 @@ import PlanGate from '../../components/voice/PlanGate.jsx';
 import VoiceStatus from '../../components/voice/VoiceStatus.jsx';
 import VoiceToggle from '../../components/voice/VoiceToggle.jsx';
 import RecordingInterface from '../../components/voice/RecordingInterface.jsx';
+import { getPublicChatDisplayUrl } from '../../utils/publicLinks.js';
 
 const STEPS = [
   {
@@ -106,7 +107,7 @@ const VoiceClone = () => {
               >
                 {clones.map((clone) => (
                   <option key={clone.id} value={clone.id}>
-                    {clone.name} · alter.ai/{clone.slug}
+                    {clone.name} · {getPublicChatDisplayUrl(clone.slug)}
                   </option>
                 ))}
               </select>

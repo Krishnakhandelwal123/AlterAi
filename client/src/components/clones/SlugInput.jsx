@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cloneApi } from '../../api/cloneApi.js';
+import { PUBLIC_APP_HOST } from '../../utils/publicLinks.js';
 
 const generateSlug = (name) =>
   name
@@ -96,7 +97,7 @@ const SlugInput = ({ name = '', value, onChange, onAvailabilityChange }) => {
             userSelect: 'none'
           }}
         >
-          alter.ai/
+          {PUBLIC_APP_HOST}/chat/
         </div>
 
         {/* Slug input */}
@@ -163,7 +164,7 @@ const SlugInput = ({ name = '', value, onChange, onAvailabilityChange }) => {
           <>
             <span style={{ color: '#059669' }}>✓</span>
             <span style={{ color: '#059669' }}>
-              alter.ai/{value} is available
+              {PUBLIC_APP_HOST}/chat/{value} is available
             </span>
           </>
         )}

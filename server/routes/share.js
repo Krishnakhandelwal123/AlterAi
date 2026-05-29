@@ -12,7 +12,7 @@ const SHARE_PLATFORMS = ['twitter', 'linkedin', 'whatsapp', 'copy', 'qr'];
 const getBaseUrl = (req) => {
   const configured = process.env.PUBLIC_APP_URL || process.env.CLIENT_URL;
   if (configured) return configured.replace(/\/$/, '');
-  return `${req.protocol}://${req.get('host')}`;
+  return 'https://alterai.tech';
 };
 
 const getMessageCount = (conversation) => {
@@ -106,7 +106,7 @@ const getBaseUrlFromShareUrl = (shareUrl) => {
   try {
     return new URL(shareUrl).origin;
   } catch {
-    return 'https://alter.ai';
+    return 'https://alterai.tech';
   }
 };
 
@@ -140,7 +140,7 @@ router.get('/:cloneId', authenticate, async (req, res) => {
       },
       plan,
       shareUrl,
-      displayUrl: `alter.ai/chat/${clone.slug}`,
+      displayUrl: `alterai.tech/chat/${clone.slug}`,
       embedCode: buildEmbedCode({ shareUrl, slug: clone.slug, clone }),
       stats: {
         totalShares,

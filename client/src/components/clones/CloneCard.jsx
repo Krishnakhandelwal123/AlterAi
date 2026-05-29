@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getPublicChatDisplayUrl, getPublicChatUrl } from '../../utils/publicLinks.js';
 
 const getInitials = (name = '') => {
   const parts = name.trim().split(/\s+/);
@@ -107,7 +108,7 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(`alter.ai/${slug}`);
+      await navigator.clipboard.writeText(getPublicChatUrl(slug));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -231,7 +232,7 @@ const CloneCard = ({ clone, onDelete, onPublish, onEdit, onShare }) => {
                   marginTop: 2
                 }}
               >
-                alter.ai/{slug}
+                {getPublicChatDisplayUrl(slug)}
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
 import SlugInput from './SlugInput.jsx';
 import ToneSelector from './ToneSelector.jsx';
+import { getPublicChatDisplayUrl } from '../../utils/publicLinks.js';
 
 const STEPS = ['Name', 'Personality', 'Style', 'Preview'];
 
@@ -269,7 +270,7 @@ const CreateCloneModal = ({ onClose, onCreate }) => {
                 <div style={{ width: 64, height: 64, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 24, color: '#fff', flexShrink: 0 }}>{getInitials(form.name)}</div>
                 <div>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 22, fontWeight: 300, color: '#fff' }}>{form.name}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(0,212,255,0.88)', marginTop: 3 }}>alter.ai/{form.slug}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: 'rgba(0,212,255,0.88)', marginTop: 3 }}>{getPublicChatDisplayUrl(form.slug)}</div>
                   {form.bio && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{form.bio}</div>}
                 </div>
               </div>
