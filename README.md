@@ -33,13 +33,13 @@
 | Public Chat Page `/chat/:slug` | ✅ Done |
 | Razorpay Billing (Pro / Creator) | ✅ Done |
 | Share & Embed (iframe + floating widget) | ✅ Done |
-| Analytics Dashboard | 🔄 In Progress |
+| Analytics Dashboard | ✅ Done  |
 | Voice Cloning (ElevenLabs) | ✅ Done |
 | In-app Notifications & Settings | ✅ Done |
 | Social import (GitHub, Reddit, Notion, Medium, X) | ✅ Done |
-| LinkedIn / Instagram import | ⬜ API limits (use Upload/Paste) |
-| Mobile Responsive Polish | ⬜ Upcoming |
-| Production Deploy | ⬜ Upcoming |
+| LinkedIn / Instagram import | ✅ Done |
+| Mobile Responsive Polish | ✅ Done |
+| Production Deploy | ✅ Done  |
 
 ---
 
