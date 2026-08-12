@@ -6,6 +6,7 @@ import ProductDetails from '../components/ProductDetails';
 import BuyNow from '../components/BuyNow';
 import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
+import WaterEffect from '../components/WaterEffect';
 import { useAuth } from '../hooks/useAuth';
 
 const Home = () => {
@@ -20,30 +21,96 @@ const Home = () => {
       <div className="grain-overlay-fixed" />
       <Navbar />
       <main className="relative">
-        <section data-scroll-section className="flex relative justify-center items-center px-7 min-h-screen md:px-12">
-          <div className="w-full max-w-[1100px] mt-16 md:mt-20">
-            <p className="luxury-label reveal-up" style={{ animationDelay: '0ms' }}>
+        {/* ── HERO ── */}
+        <section
+          data-scroll-section
+          className="relative flex items-center min-h-screen px-7 md:px-12 overflow-hidden"
+        >
+          {/* Mouse interactive water ripple overlay */}
+          <WaterEffect />
+          {/* Giant watermark background text moving alternatively */}
+          <div
+            className="absolute inset-0 flex flex-col justify-around py-12 pointer-events-none select-none overflow-hidden z-0"
+            aria-hidden="true"
+          >
+            {/* Row 1: Left moving */}
+            <div className="w-full flex overflow-hidden opacity-[0.07] md:opacity-[0.05]">
+              <div className="animate-marquee-left flex whitespace-nowrap">
+                <span className="hero-watermark mr-16">CLONE YOUR MIND · SHADOW PROFILE · NEURAL MESH · CHAT BOT · CLONE YOUR MIND ·</span>
+                <span className="hero-watermark mr-16">CLONE YOUR MIND · SHADOW PROFILE · NEURAL MESH · CHAT BOT · CLONE YOUR MIND ·</span>
+                <span className="hero-watermark mr-16">CLONE YOUR MIND · SHADOW PROFILE · NEURAL MESH · CHAT BOT · CLONE YOUR MIND ·</span>
+              </div>
+            </div>
+            {/* Row 2: Right moving */}
+            <div className="w-full flex overflow-hidden opacity-[0.07] md:opacity-[0.05]">
+              <div className="animate-marquee-right flex whitespace-nowrap">
+                <span className="hero-watermark mr-16">INFINITE REACH · PERSONALITY CORE · AUTOPILOT · EMOTION CORE · INFINITE REACH ·</span>
+                <span className="hero-watermark mr-16">INFINITE REACH · PERSONALITY CORE · AUTOPILOT · EMOTION CORE · INFINITE REACH ·</span>
+                <span className="hero-watermark mr-16">INFINITE REACH · PERSONALITY CORE · AUTOPILOT · EMOTION CORE · INFINITE REACH ·</span>
+              </div>
+            </div>
+            {/* Row 3: Left moving */}
+            <div className="w-full flex overflow-hidden opacity-[0.07] md:opacity-[0.05]">
+              <div className="animate-marquee-left flex whitespace-nowrap">
+                <span className="hero-watermark mr-16">YOUR AI COMPANION · DIGITAL TWIN · SPEAKS YOUR LANGUAGE · YOUR AI COMPANION ·</span>
+                <span className="hero-watermark mr-16">YOUR AI COMPANION · DIGITAL TWIN · SPEAKS YOUR LANGUAGE · YOUR AI COMPANION ·</span>
+                <span className="hero-watermark mr-16">YOUR AI COMPANION · DIGITAL TWIN · SPEAKS YOUR LANGUAGE · YOUR AI COMPANION ·</span>
+              </div>
+            </div>
+            {/* Row 4: Right moving */}
+            <div className="w-full flex overflow-hidden opacity-[0.07] md:opacity-[0.05]">
+              <div className="animate-marquee-right flex whitespace-nowrap">
+                <span className="hero-watermark mr-16">PEAK PERFORMANCE · MILITARY GRADE AI · AUTONOMOUS TASKS · PEAK PERFORMANCE ·</span>
+                <span className="hero-watermark mr-16">PEAK PERFORMANCE · MILITARY GRADE AI · AUTONOMOUS TASKS · PEAK PERFORMANCE ·</span>
+                <span className="hero-watermark mr-16">PEAK PERFORMANCE · MILITARY GRADE AI · AUTONOMOUS TASKS · PEAK PERFORMANCE ·</span>
+              </div>
+            </div>
+            {/* Row 5: Left moving */}
+            <div className="w-full flex overflow-hidden opacity-[0.07] md:opacity-[0.05]">
+              <div className="animate-marquee-left flex whitespace-nowrap">
+                <span className="hero-watermark mr-16">QUANTUM AI CORE · INDUSTRIAL STRENGTH · SECURE INTEGRATIONS · QUANTUM AI CORE ·</span>
+                <span className="hero-watermark mr-16">QUANTUM AI CORE · INDUSTRIAL STRENGTH · SECURE INTEGRATIONS · QUANTUM AI CORE ·</span>
+                <span className="hero-watermark mr-16">QUANTUM AI CORE · INDUSTRIAL STRENGTH · SECURE INTEGRATIONS · QUANTUM AI CORE ·</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Main hero content */}
+          <div className="relative z-10 w-full max-w-[1100px] mt-16 md:mt-20">
+            <p className="luxury-label reveal-up" style={{ animationDelay: '600ms' }}>
               AI PERSONALITY PLATFORM · 2025
             </p>
-            <h1 className="mt-7 luxury-headline">
-              <span className="block reveal-up" style={{ animationDelay: '200ms' }}>
-                One you.
+
+            <h1 className="mt-7 hero-title">
+              <span className="block reveal-up" style={{ animationDelay: '750ms' }}>
+                The Future Speaks
               </span>
-              <span className="block reveal-up luxury-indent" style={{ animationDelay: '380ms' }}>
-                Infinite reach.
+              <span className="block reveal-up" style={{ animationDelay: '920ms' }}>
+                with <span className="hero-accent">Alter AI</span>
               </span>
             </h1>
+
             <div className="mt-8 luxury-rule" />
-            <p className="mt-8 luxury-subtext reveal-up" style={{ animationDelay: '720ms' }}>
-              Clone yourself with AI. Let fans, students, and followers talk to you - in your voice, with your
-              knowledge - 24/7, on autopilot.
+
+            <p className="mt-8 luxury-subtext reveal-up" style={{ animationDelay: '1100ms' }}>
+              Clone yourself with AI. Let fans, students, and
+              followers talk to you — in your voice, with your
+              knowledge — 24/7, on autopilot.
             </p>
-            <Link to="/auth" className="inline-block mt-8 luxury-cta reveal-up" style={{ animationDelay: '880ms' }}>
+
+            <Link
+              to="/auth"
+              className="inline-block mt-8 luxury-cta reveal-up"
+              style={{ animationDelay: '1260ms' }}
+            >
               Create Free Clone →
             </Link>
           </div>
+
           <div className="absolute bottom-0 left-0 w-full h-px bg-[#7C3AED]/20" />
         </section>
+
+
 
         <section id="about" data-scroll-section>
           <ProductDetails product={currentProduct} />
