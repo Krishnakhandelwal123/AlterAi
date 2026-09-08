@@ -94,7 +94,7 @@ app.use(errorHandler);
 
 let server;
 if (process.env.NODE_ENV !== 'test') {
-  server = app.listen(PORT, () => {
+  server = app.listen(PORT, '0.0.0.0', () => {
     // eslint-disable-next-line no-console
     console.log(`Server running on ${PORT}`);
   });
