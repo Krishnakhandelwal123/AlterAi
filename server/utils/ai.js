@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { pipeline } from '@huggingface/transformers';
 import '../config/env.js';
 
-const CHAT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const CHAT_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 let _chatAI = null;
 
 const getChatAI = () => {

@@ -69,7 +69,11 @@ export const retrieveRelevantContext = async ({
   };
 
   try {
-    const [queryVec] = await embedChunks([query]);
+    const embedPromise = embedChunks([query]);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Vector embedding timeout')), 4000)
+    );
+    const [queryVec] = await Promise.race([embedPromise, timeoutPromise]);
     const { data: vectorChunks, error } = await supabase.rpc('match_personality_embeddings', {
       query_embedding: queryVec,
       match_threshold: 0.15,
